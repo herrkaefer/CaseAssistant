@@ -10,7 +10,7 @@ Swift是很棒的语言（有趣有用的optional类型），学习时真的为�
 
 ## Data Storage
 
-数据存储使用了[Realm Swift](https://realm.io/docs/swift/latest/)。数据建模很方便，跨平台（不过我没来得及做Addriod）。
+数据存储使用了[Realm Swift](https://realm.io/docs/swift/latest/)。数据建模很方便，跨平台（不过我没来得及做Android）。
 
 ## Package Management
 
