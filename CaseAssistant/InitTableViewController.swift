@@ -24,18 +24,18 @@ class InitTableViewController: UITableViewController
     }
     
     func addNewCategory() {
-        var alert = UIAlertController(title: "新增类别", message: "", preferredStyle: .Alert)
-        alert.addTextFieldWithConfigurationHandler({ textField in
+        let alert = UIAlertController(title: "新增类别", message: "", preferredStyle: .alert)
+        alert.addTextField(configurationHandler: { textField in
             textField.placeholder = "输入类别名称"
         })
-        alert.addAction(UIAlertAction(title: "取消", style: .Cancel, handler: nil))
-        alert.addAction(UIAlertAction(title: "完成", style: .Default, handler: {action in
-            let tf = alert.textFields![0] as! UITextField
-            Category.addNewCategory(tf.text.isEmpty ? "未命名类别" : tf.text, isFirst: true)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "完成", style: .default, handler: {action in
+            let tf = alert.textFields![0] 
+            let _ = Category.addNewCategory((tf.text?.isEmpty)! ? "未命名类别" : tf.text!, isFirst: true)
             self.loadData()
             self.tableView.reloadData()
         }))
-        self.presentViewController(alert, animated: true, completion: nil)
+        self.present(alert, animated: true, completion: nil)
     }
     
     
@@ -45,9 +45,9 @@ class InitTableViewController: UITableViewController
     
     // MARK: - Actions
     
-    @IBAction func toggleEditing(sender: UIBarButtonItem) {
-        self.tableView.editing = !self.tableView.editing
-        if self.tableView.editing == true {
+    @IBAction func toggleEditing(_ sender: UIBarButtonItem) {
+        self.tableView.isEditing = !self.tableView.isEditing
+        if self.tableView.isEditing == true {
             editingBarButtonItem.image = nil
             editingBarButtonItem.title = "完成"
             enableSideMenuGesture(false) // 禁用MMDrawerController手势，否则干扰cell移动
@@ -61,7 +61,7 @@ class InitTableViewController: UITableViewController
         tableView.reloadData()
     }
     
-    @IBAction func showSettingMenu(sender: UIBarButtonItem) {
+    @IBAction func showSettingMenu(_ sender: UIBarButtonItem) {
         toggleSideMenu()
     }
     
@@ -72,7 +72,7 @@ class InitTableViewController: UITableViewController
         loadData()
     }
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         title = "行医手记"
         tableView.reloadData()
         
@@ -80,38 +80,38 @@ class InitTableViewController: UITableViewController
     }
 
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         enableSideMenuGesture(false)
     }
 
     // MARK: - TableView Data Source
 
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 2
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0:
             return 2
         case 1:
-            return self.tableView.editing ? (categories.count+1) : categories.count
+            return self.tableView.isEditing ? (categories.count+1) : categories.count
         default:
             return 0
         }
     }
 
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         switch indexPath.section {
         case 0:
             if indexPath.row == 0 {
-                let cell = tableView.dequeueReusableCellWithIdentifier("starredCell", forIndexPath: indexPath) as! UITableViewCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "starredCell", for: indexPath) 
                 cell.textLabel?.text = "星标病例"
                 cell.detailTextLabel?.text = ""+"\(Patient.starredPatients.count)"
                 return cell
             } else if indexPath.row == 1 {
-                let cell = tableView.dequeueReusableCellWithIdentifier("tagCell", forIndexPath: indexPath) as! UITableViewCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "tagCell", for: indexPath) 
                 cell.textLabel?.text = "标签"
                 cell.detailTextLabel?.text = ""+"\(Tag.numberOfTags)"
                 return cell
@@ -120,9 +120,9 @@ class InitTableViewController: UITableViewController
             }
             
         case 1:
-            let cell = tableView.dequeueReusableCellWithIdentifier("categoryCell", forIndexPath: indexPath) as! UITableViewCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath) 
             
-            if self.tableView.editing == true { // 编辑状态
+            if self.tableView.isEditing == true { // 编辑状态
                 if indexPath.row == 0 { // 第一行用于增加类别
                     cell.textLabel?.text = "点此添加新类别"
                     cell.detailTextLabel?.text = ""
@@ -143,10 +143,20 @@ class InitTableViewController: UITableViewController
     }
 
     
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        if section == 1 && tableView.isEditing {
+            return "无法删除非空类别"
+        }
+        else {
+            return ""
+        }
+        
+    }
+    
     // MARK: - TableView Delegate
     
     // Override to support conditional editing of the table view.
-    override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         if indexPath.section == 0 { // 星标、标签行不允许编辑
             return false
         }
@@ -154,70 +164,70 @@ class InitTableViewController: UITableViewController
     }
     
     // 使不可编辑的行不缩进
-    override func tableView(tableView: UITableView, shouldIndentWhileEditingRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+    override func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
         return false
     }
     
-    override func tableView(tableView: UITableView, editingStyleForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCellEditingStyle {
-        if self.tableView.editing && indexPath.section == 1 {
+    override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+        if self.tableView.isEditing && indexPath.section == 1 {
             if indexPath.row == 0 {
-                return .Insert
+                return .insert
             } else {
                 if self.categories[indexPath.row-1].numberOfPatients > 0 {
-                    return .None
+                    return .none
                 } else {
-                    return .Delete
+                    return .delete
                 }
             }
         } else {
-            return .None
+            return .none
         }
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        if self.tableView.editing == true && indexPath.section == 1 {
+        if self.tableView.isEditing == true && indexPath.section == 1 {
             
             if indexPath.row == 0 { // 第一行用作添加新类别
                 self.addNewCategory()
                 
             } else { // 点击其他行->修改类别名
-                var alert = UIAlertController(
+                let alert = UIAlertController(
                     title: "重命名类别",
                     message: "当前名称: "+self.categories[indexPath.row-1].name,
-                    preferredStyle: .Alert)
+                    preferredStyle: .alert)
                 
-                alert.addTextFieldWithConfigurationHandler({ textField in
+                alert.addTextField(configurationHandler: { textField in
                     textField.placeholder = "输入新类别名称"
                 })
                 
-                alert.addAction(UIAlertAction(title: "取消", style: .Cancel, handler: nil))
+                alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
                 
                 alert.addAction(UIAlertAction(
                     title: "完成",
-                    style: .Default,
+                    style: .default,
                     handler: {action in
-                        let tf = alert.textFields![0] as! UITextField
-                        if !tf.text.isEmpty {
-                            self.categories[indexPath.row-1].rename(tf.text)
+                        let tf = alert.textFields![0] 
+                        if !(tf.text?.isEmpty)! {
+                            let _ = self.categories[indexPath.row-1].rename(tf.text!)
                         }
                         self.tableView.reloadData()
                     }
                 ))
                 
-                self.presentViewController(alert, animated: true, completion: nil) 
+                self.present(alert, animated: true, completion: nil) 
             }
         }
     }
     
     // Override to support editing the table view.
-    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Insert {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .insert {
             if indexPath.row == 0 {
                 addNewCategory()
             }
         }
-        if editingStyle == .Delete {
+        if editingStyle == .delete {
             categories[indexPath.row-1].removeFromDB()
             loadData()
             tableView.reloadData()
@@ -225,9 +235,9 @@ class InitTableViewController: UITableViewController
     }
     
     // Override to support rearranging the table view.
-    override func tableView(tableView: UITableView, moveRowAtIndexPath fromIndexPath: NSIndexPath, toIndexPath: NSIndexPath) {
+    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to toIndexPath: IndexPath) {
         if fromIndexPath.section == 1 && toIndexPath.section == 1 && fromIndexPath.row != toIndexPath.row {
-            var itemToMove = categories[fromIndexPath.row-1]
+            let itemToMove = categories[fromIndexPath.row-1]
             let newOrder = categories[toIndexPath.row-1].order
             itemToMove.updateOrder(newOrder)
             loadData()
@@ -237,8 +247,8 @@ class InitTableViewController: UITableViewController
     
     
     // Override to support conditional rearranging of the table view.
-    override func tableView(tableView: UITableView, canMoveRowAtIndexPath indexPath: NSIndexPath) -> Bool {
-        if (self.tableView.editing == true && indexPath.section == 1 && indexPath.row > 0) {
+    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        if (self.tableView.isEditing == true && indexPath.section == 1 && indexPath.row > 0) {
             return true
         } else {
             return false
@@ -249,21 +259,22 @@ class InitTableViewController: UITableViewController
     // MARK: - Navigation
 
     // 编辑状态下禁止segue
-    override func shouldPerformSegueWithIdentifier(identifier: String?, sender: AnyObject?) -> Bool {
-        return !(self.tableView.editing == true)
+    override func shouldPerformSegue(withIdentifier identifier: String?, sender: Any?) -> Bool {
+        return !(self.tableView.isEditing == true)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let identifier = segue.identifier {
             switch identifier {
             case "showStarredPatients":
-                let categoryVC = segue.destinationViewController.topViewController as! PatientGroupViewController
+                let categoryVC = segue.destination as! PatientGroupTableViewController
                 categoryVC.setToShowStarred()
     
             case "showPatientsInCategory":
                 let cell = sender as! UITableViewCell
-                if let indexPath = tableView.indexPathForCell(cell) {
-                    let categoryVC = segue.destinationViewController.topViewController as! PatientGroupViewController
+                if let indexPath = tableView.indexPath(for: cell) {
+                    let categoryVC = segue.destination as! PatientGroupTableViewController
                     categoryVC.setToShowCategory(categories[indexPath.row])
                 }
 

@@ -28,8 +28,8 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     
     @IBOutlet weak var tagsLabel: UILabel! {
         didSet {
-            tagsLabel.userInteractionEnabled = true
-            let recognizer = UITapGestureRecognizer(target: self, action: "selectTags:")
+            tagsLabel.isUserInteractionEnabled = true
+            let recognizer = UITapGestureRecognizer(target: self, action: #selector(PatientInfoTableViewController.selectTags(_:)))
             recognizer.numberOfTapsRequired = 1
             tagsLabel.addGestureRecognizer(recognizer)
         }
@@ -100,12 +100,12 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
 //        self.view.endEditing(true)
 //    }
     
-    func selectTags(gesture: UITapGestureRecognizer) {
-        performSegueWithIdentifier("showTagPicker", sender: self)
+    func selectTags(_ gesture: UITapGestureRecognizer) {
+        performSegue(withIdentifier: "showTagPicker", sender: self)
     }
     
     // set textview height
-    func setTextViewHeightConstraints(textView: UITextView) {
+    func setTextViewHeightConstraints(_ textView: UITextView) {
         
         let textViewWidth = tableView.frame.size.width - 16
 //        println("textViewWidth: \(textViewWidth)")
@@ -119,11 +119,11 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
         switch textView {
             
         case diagnosisTextView:
-            diagnosisTextViewHeightConstraint.constant = diagnosisTextView.sizeThatFits(CGSizeMake(textViewWidth, CGFloat.max)).height
+            diagnosisTextViewHeightConstraint.constant = diagnosisTextView.sizeThatFits(CGSize(width: textViewWidth, height: CGFloat.greatestFiniteMagnitude)).height
         case illDescriptionTextView:
-            illDescTextViewHeightConstraint.constant = illDescriptionTextView.sizeThatFits(CGSizeMake(textViewWidth, CGFloat.max)).height
+            illDescTextViewHeightConstraint.constant = illDescriptionTextView.sizeThatFits(CGSize(width: textViewWidth, height: CGFloat.greatestFiniteMagnitude)).height
         case commentTextView:
-            commentTextViewHeightConstraint.constant = commentTextView.sizeThatFits(CGSizeMake(textViewWidth, CGFloat.max)).height
+            commentTextViewHeightConstraint.constant = commentTextView.sizeThatFits(CGSize(width: textViewWidth, height: CGFloat.greatestFiniteMagnitude)).height
         default:
             break
         }
@@ -131,46 +131,47 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
         tableView.reloadData()
     }
     
-    func setNewPatient(forCategory: Category?, starred: Bool, tagName: String?) {
+    func setNewPatient(_ forCategory: Category?, starred: Bool, tagName: String?) {
         patient = Patient.addNewPatient(forCategory, starred: starred)
+//        print(patient)
         if tagName != nil {
             patient!.addTagByName(tagName!)
         }
         isNewPatient = true
     }
     
-    func setShowPatient(p: Patient) {
+    func setShowPatient(_ p: Patient) {
         patient = p
         isNewPatient = false
     }
     
-    func showUIBorder(enabled: Bool) {
+    func showUIBorder(_ enabled: Bool) {
         let borderWidth = CGFloat(enabled ? 0.5 : 0.0)
-        nameTextField.borderStyle = enabled ? .RoundedRect : .None
+        nameTextField.borderStyle = enabled ? .roundedRect : .none
         categoryButton.layer.borderWidth = borderWidth
         genderButton.layer.borderWidth = borderWidth
         birthdateButton.layer.borderWidth = borderWidth
-        phoneTextField.borderStyle = enabled ? .RoundedRect : .None
-        documentNumberTextField.borderStyle = enabled ? .RoundedRect : .None
+        phoneTextField.borderStyle = enabled ? .roundedRect : .none
+        documentNumberTextField.borderStyle = enabled ? .roundedRect : .none
         diagnosisTextView.layer.borderWidth = borderWidth
         illDescriptionTextView.layer.borderWidth = borderWidth
         commentTextView.layer.borderWidth = borderWidth
     }
 
-    func enableTextViewScroll(enabled: Bool) {
-        diagnosisTextView.scrollEnabled = enabled
-        illDescriptionTextView.scrollEnabled = enabled
-        commentTextView.scrollEnabled = enabled
+    func enableTextViewScroll(_ enabled: Bool) {
+        diagnosisTextView.isScrollEnabled = enabled
+        illDescriptionTextView.isScrollEnabled = enabled
+        commentTextView.isScrollEnabled = enabled
     }
     
     func updateUIWithData() {
         
         // set UI contents
         nameTextField.text = patient!.g("name")
-        categoryButton.setTitle(patient!.category.name, forState: .Normal)
-        tagsLabel.text = " ".join(patient!.tagNames)
-        genderButton.setTitle(patient!.g("gender"), forState: .Normal)
-        birthdateButton.setTitle(NSDateFormatter.localizedStringFromDate(patient!.birthdate, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+        categoryButton.setTitle(patient!.category.name, for: UIControlState())
+        tagsLabel.text = patient!.tagNames.joined(separator: " ")
+        genderButton.setTitle(patient!.g("gender"), for: UIControlState())
+        birthdateButton.setTitle(DateFormatter.localizedString(from: patient!.birthdate as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
         phoneTextField.text = patient!.g("phoneNo")
         documentNumberTextField.text = patient!.g("documentNo")
         diagnosisTextView.text = patient!.g("diagnosis")
@@ -181,44 +182,44 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
 
     // MARK: - IBActions
     
-    @IBAction func chooseGender(sender: UIButton) {
+    @IBAction func chooseGender(_ sender: UIButton) {
         
-        var alert = UIAlertController(
+        let alert = UIAlertController(
             title: nil,
             message: nil,
-            preferredStyle: .ActionSheet
+            preferredStyle: .actionSheet
         )
         
         alert.addAction(UIAlertAction(
             title: "男",
-            style: .Default,
+            style: .default,
             handler: {action in
                 self.patient!.s("gender", value: "男")
-                self.genderButton.setTitle("男", forState: .Normal)
+                self.genderButton.setTitle("男", for: UIControlState())
             }
         ))
         
         alert.addAction(UIAlertAction(
             title: "女",
-            style: .Default,
+            style: .default,
             handler: {action in
                 self.patient!.s("gender", value: "女")
-                self.genderButton.setTitle("女", forState: .Normal)
+                self.genderButton.setTitle("女", for: UIControlState())
             }
         ))
 
         alert.addAction(UIAlertAction(
             title: "取消",
-            style: .Cancel,
+            style: .cancel,
             handler: nil
         ))
         
-        alert.modalPresentationStyle = .Popover
+        alert.modalPresentationStyle = .popover
         let ppc = alert.popoverPresentationController
         ppc?.sourceView = genderButton
         ppc?.sourceRect = genderButton.bounds
-        ppc?.permittedArrowDirections = .Any
-        presentViewController(alert, animated: true, completion: nil)
+        ppc?.permittedArrowDirections = .any
+        present(alert, animated: true, completion: nil)
     }
 
     // MARK: - ViewController Lifecycle
@@ -232,15 +233,25 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
         
         title = isNewPatient ? "添加患者" : "患者信息"
         
+        if isNewPatient { // Hide "Back" and show "Done"
+            self.navigationItem.hidesBackButton = true
+            self.navigationItem.rightBarButtonItem?.isEnabled = true
+        }
+        else {
+            self.navigationItem.rightBarButtonItem = nil
+        }
+        
         tableView.estimatedRowHeight = tableView.rowHeight
         tableView.rowHeight = UITableViewAutomaticDimension
     }
     
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
+        
         // end editing, dismiss keyboard
-        view.endEditing(true)
+        self.view.endEditing(true)
+        
 //        if navigationController?.visibleViewController == self {
 //            if patientIsUpdated == true {
 //                patient!.saveToDB()
@@ -248,7 +259,7 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
 //        }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         tableView.reloadData()
@@ -262,7 +273,7 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     
     // MARK: - TableView Delegate
     
-    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
          // diagnosis cell
         if indexPath.row == 7 {
@@ -288,7 +299,7 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     // MARK: - TextField Delegate
     
     // Responder Chain 设置textField的键盘的完成键行为：dismiss keyboard 或转移firstResponder到其它control
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == nameTextField {
             nameTextField.resignFirstResponder()
         }
@@ -302,19 +313,19 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     }
     
     // 注意在viewWillDisappear()中加view.endEditing(true)，保证正在编辑的textField和textView都有一个endEditing调用，在其中获得更新的数据
-    func textFieldDidEndEditing(textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         
         switch textField {
         case nameTextField:
-            if textField.text.isEmpty {
+            if (textField.text?.isEmpty)! {
                 patient!.s("name", value: "未知")
             } else {
-                patient!.s("name", value: textField.text)
+                patient!.s("name", value: textField.text!)
             }
         case phoneTextField:
-            patient!.s("phoneNo", value: textField.text)
+            patient!.s("phoneNo", value: textField.text!)
         case documentNumberTextField:
-            patient!.s("documentNo", value: textField.text)
+            patient!.s("documentNo", value: textField.text!)
         default:
             break
         }
@@ -323,7 +334,7 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     // MARK: - TextView Delegate
     
     // 注意在viewWillDisappear()中加view.endEditing(true)，保证正在编辑的textField和textView都有一个endEditing调用，在其中获得更新的数据
-    func textViewDidEndEditing(textView: UITextView) {
+    func textViewDidEndEditing(_ textView: UITextView) {
         switch textView {
         case diagnosisTextView:
             patient!.s("diagnosis", value: textView.text)
@@ -342,18 +353,21 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     
     // MARK: - Navigation
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let identifier = segue.identifier {
             switch identifier {
+            
             case "showCategoryPicker":
-                let categoryPickerVC = segue.destinationViewController.topViewController as! CategoryPickerViewController
+                let categoryPickerVC = (segue.destination as! UINavigationController).topViewController as! CategoryPickerViewController
                 categoryPickerVC.selectedCategory = patient!.category.name
+            
             case "showDatePicker":
-                let datePickerVC = segue.destinationViewController.topViewController as! DatePickerViewController
+                let datePickerVC = (segue.destination as! UINavigationController).topViewController as! DatePickerViewController
                 datePickerVC.fromVC = "EditPatientVC"
                 datePickerVC.selectedDate = patient!.birthdate
+                
             case "showTagPicker":
-                let tagPickerVC = segue.destinationViewController.topViewController as! TagPickerViewController
+                let tagPickerVC = (segue.destination as! UINavigationController).topViewController as! TagPickerViewController
                 tagPickerVC.patient = patient
             default:
                 break
@@ -363,27 +377,27 @@ class PatientInfoTableViewController: UITableViewController, UITextFieldDelegate
     
     
     // Unwind Segue
-    @IBAction func goBackToEditPatientViewController(segue: UIStoryboardSegue) {
+    @IBAction func goBackToEditPatientViewController(_ segue: UIStoryboardSegue) {
         
         // from CategoryPickerViewController
-        if let categoryPickerVC = segue.sourceViewController as? CategoryPickerViewController where segue.identifier == "backToPatientInfo" {
+        if let categoryPickerVC = segue.source as? CategoryPickerViewController, segue.identifier == "backToPatientInfo" {
             if categoryPickerVC.selectedCategory != nil {
                 patient!.sCategoryByName(categoryPickerVC.selectedCategory!)
-                categoryButton.setTitle(categoryPickerVC.selectedCategory, forState: .Normal)
+                categoryButton.setTitle(categoryPickerVC.selectedCategory, for: UIControlState())
             }
         }
             
         // from DatePickerViewController
-        else if let datePickerVC = segue.sourceViewController as? DatePickerViewController where segue.identifier == "backToPatientInfo" {
+        else if let datePickerVC = segue.source as? DatePickerViewController, segue.identifier == "backToPatientInfo" {
             if datePickerVC.selectedDate != nil {
                 patient!.sBirthdate(datePickerVC.selectedDate!)
-                birthdateButton.setTitle(NSDateFormatter.localizedStringFromDate(patient!.birthdate, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+                birthdateButton.setTitle(DateFormatter.localizedString(from: patient!.birthdate as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
             }
         }
         
         // from TagPickerViewController
-        else if let tagPickerVC = segue.sourceViewController as? TagPickerViewController where segue.identifier == "backToPatientInfo" {
-                tagsLabel.text = " ".join(patient!.tagNames)
+        else if let _ = segue.source as? TagPickerViewController, segue.identifier == "backToPatientInfo" {
+                tagsLabel.text = patient!.tagNames.joined(separator: " ")
             }
         
         }

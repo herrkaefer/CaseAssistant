@@ -1,26 +1,25 @@
-platform :ios, '8.0'
+platform :ios, '9.0'
 use_frameworks!
 
 target 'CaseAssistant' do
-    
+
     pod 'RealmSwift'
     pod 'MMDrawerController'
     pod 'QBImagePickerController'
     pod 'IDMPhotoBrowser'
     pod 'PNChart'
     pod 'KLCPopup'
-    
-#    pod 'UMengFeedback'
-#    pod 'UMengSocial'
-#    pod 'UMengAnalytics-NO-IDFA'
 
-    
-#    pod 'UMengMessage'
-#    pod 'Doorbell'
-#    pod 'SWTableViewCell', '~> 0.3'
 end
 
 target 'CaseAssistantTests' do
 
 end
 
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['SWIFT_VERSION'] = '3.0'
+    end
+  end
+end

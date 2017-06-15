@@ -26,7 +26,7 @@ class PatientSummaryViewController: UIViewController, UITextViewDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        summaryTextView.layer.borderColor = CaseNoteConstants.borderColor.CGColor
+        summaryTextView.layer.borderColor = CaseApp.borderColor.cgColor
         summaryTextView.layer.cornerRadius = 5.0
         summaryTextView.layer.borderWidth = 0.5
         
@@ -38,35 +38,38 @@ class PatientSummaryViewController: UIViewController, UITextViewDelegate
             if summary.isEmpty {
                 // put some placeholder text
                 summaryTextView.text = "在此处写下对于该病例的分析、思考或疑问。这些内容会在分享病例时一起被分享。"
-                summaryTextView.textColor = UIColor.lightGrayColor()
+                summaryTextView.textColor = UIColor.lightGray
             } else {
                 summaryTextView.text = summary
-                summaryTextView.textColor = UIColor.blackColor()
+                summaryTextView.textColor = UIColor.black
             }
         }
         
         // register For Keyboard Notifications
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardDidShow:", name: UIKeyboardDidShowNotification, object: self.view.window)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillHide:", name: UIKeyboardWillHideNotification, object: self.view.window)
+        NotificationCenter.default.addObserver(self, selector: #selector(PatientSummaryViewController.keyboardDidShow(_:)), name: NSNotification.Name.UIKeyboardDidShow, object: self.view.window)
+        NotificationCenter.default.addObserver(self, selector: #selector(PatientSummaryViewController.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: self.view.window)
         
     }
 
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
         if summaryChanged == true {
             patient!.s("summary", value: summaryTextView.text)
         }
     }
     
-    override func viewWillLayoutSubviews() {
-        super.viewWillLayoutSubviews()
-        
-        summaryTextViewOriginalFrame = nil // 当设备旋转，充值summaryTextViewOriginalFrame为nil，强迫在keyboardDidShow()中重新为summaryTextView计算新的frame
-    }
     
-    func keyboardDidShow(n: NSNotification) {
+//    override func viewWillLayoutSubviews() {
+//        super.viewWillLayoutSubviews()
+//        
+//        summaryTextViewOriginalFrame = nil // 当设备旋转，充值summaryTextViewOriginalFrame为nil，强迫在keyboardDidShow()中重新为summaryTextView计算新的frame
+//    }
+    
+    
+    func keyboardDidShow(_ n: Notification) {
         if let userInfo = n.userInfo {
-            if let kbSize = userInfo[UIKeyboardFrameEndUserInfoKey]?.CGRectValue().size {
+            let kbSize = (userInfo[UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue.size
+//            if let kbSize = (userInfo[UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue.size {
                 if summaryTextViewOriginalFrame == nil { // first shown
 //                    println("first shown")
                     summaryTextViewOriginalFrame = summaryTextView.frame
@@ -80,10 +83,11 @@ class PatientSummaryViewController: UIViewController, UITextViewDelegate
                     summaryTextView.frame = newFrame
                 }
             }
-        }
+//        }
     }
     
-    func keyboardWillHide(n: NSNotification) {
+    
+    func keyboardWillHide(_ n: Notification) {
         // set back summaryTextView's frame
         if summaryTextViewOriginalFrame != nil {
             summaryTextView.frame = summaryTextViewOriginalFrame!
@@ -94,15 +98,15 @@ class PatientSummaryViewController: UIViewController, UITextViewDelegate
     
     // MARK: - TextView Delegate
     
-    func textViewDidBeginEditing(textView: UITextView) {
+    func textViewDidBeginEditing(_ textView: UITextView) {
         let summary = patient!.g("summary")
         if summary.isEmpty {
             summaryTextView.text = "" // 清空placeholder text
-            summaryTextView.textColor = UIColor.blackColor()
+            summaryTextView.textColor = UIColor.black
         }
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         summaryChanged = true
     }
     

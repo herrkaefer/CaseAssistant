@@ -24,34 +24,34 @@ class CategoryPickerViewController: UITableViewController //, UITableViewDataSou
         self.title = "选择类别"
     }
 
-    @IBAction func cancel(sender: UIBarButtonItem) {
-        performSegueWithIdentifier("backToPatientInfo", sender: self)
+    @IBAction func cancel(_ sender: UIBarButtonItem) {
+        performSegue(withIdentifier: "backToPatientInfo", sender: self)
     }
     
 //    MARK: - UITableView DateSource & Delegate
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categories.count
     }
 
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("categoryPickerCell", forIndexPath: indexPath) as! UITableViewCell
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "categoryPickerCell", for: indexPath) 
         cell.textLabel?.text = categories[indexPath.row].name
         if selectedCategory != nil {
             if categories[indexPath.row].name == selectedCategory {
-                cell.accessoryType = UITableViewCellAccessoryType.Checkmark
+                cell.accessoryType = UITableViewCellAccessoryType.checkmark
             }
         }
         return cell
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         selectedCategory = categories[indexPath.row].name
-        performSegueWithIdentifier("backToPatientInfo", sender: self)
+        performSegue(withIdentifier: "backToPatientInfo", sender: self)
     }
 
 }

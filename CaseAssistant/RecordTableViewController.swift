@@ -7,8 +7,10 @@
 //
 
 import UIKit
+import MobileCoreServices
 import QBImagePickerController
 import IDMPhotoBrowser
+
 
 class RecordTableViewController: UITableViewController, UITextFieldDelegate, UITextViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, QBImagePickerControllerDelegate, IDMPhotoBrowserDelegate
 {
@@ -39,33 +41,33 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
 
     func loadPhotoMemos() {
         photoMemos.removeAll()
-        photoMemos.extend(record!.photoMemosSortedByCreationDateAscending)
+        photoMemos.append(contentsOf: record!.photoMemosSortedByCreationDateAscending)
     }
     
-    func setNewRecord(ofPatient: Patient) {
+    func setNewRecord(_ ofPatient: Patient) {
         record = ofPatient.addRecord()
         isNewRecord = true
     }
     
-    func setShowRecord(ofRecord: Record) {
+    func setShowRecord(_ ofRecord: Record) {
         record = ofRecord
         loadPhotoMemos()
         isNewRecord = false
     }
     
-    func setLabel(label: UILabel, itemName: String) {
-//        println("set label for \(itemName)")
+    func setLabel(_ label: UILabel, itemName: String) {
+//        print("set label for \(itemName)")
         label.layer.cornerRadius = 5.0
         label.layer.masksToBounds = true
         label.text = record!.g(itemName) + Record.nameToItems[itemName]!.suffix
         label.tag = Record.nameToItems[itemName]!.tag
-        label.userInteractionEnabled = true
-        let recognizer = UITapGestureRecognizer(target: self, action: "tapOnItem:")
+        label.isUserInteractionEnabled = true
+        let recognizer = UITapGestureRecognizer(target: self, action: #selector(RecordTableViewController.tapOnItem(_:)))
         recognizer.numberOfTapsRequired = 1
         label.addGestureRecognizer(recognizer)
     }
 
-    func updateDataAndUIWithTag(tag: Int, text: String, isCustomText: Bool) {
+    func updateDataAndUIWithTag(_ tag: Int, text: String, isCustomText: Bool) {
         if currentOperatedLabel != nil {
             if isCustomText == true {
                 currentOperatedLabel!.text = Record.tagToItems[tag]!.prefix + text + Record.tagToItems[tag]!.suffix
@@ -82,41 +84,41 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         if isNewRecord {
             title = "新增记录"
         } else {
-            title = NSDateFormatter.localizedStringFromDate(record!.date, dateStyle: .MediumStyle, timeStyle: .NoStyle)
+            title = DateFormatter.localizedString(from: record!.date as Date, dateStyle: .medium, timeStyle: .none)
         }
     }
 
     // 输入方式：基本选项 + textView
-    func tapOnItem(gesture: UITapGestureRecognizer) {
-        println("tap \(gesture.view?.tag)")
+    func tapOnItem(_ gesture: UITapGestureRecognizer) {
+//        print("tap \(gesture.view?.tag)")
         if let tag = gesture.view?.tag {
-            println(Record.tagToItems[tag]!.basicChoices)
+            print(Record.tagToItems[tag]!.basicChoices)
         }
-        performSegueWithIdentifier("showChoices", sender: gesture.view)
+        performSegue(withIdentifier: "showChoices", sender: gesture.view)
     }
     
     func addLastPhotoInLibraryToPhotoMemo() {
         // get last photo
-        var fetchOptions = PHFetchOptions()
+        let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
-        let fetchResult = PHAsset.fetchAssetsWithMediaType(.Image, options: fetchOptions)
-        if let lastAsset = fetchResult.lastObject as? PHAsset {
+        let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        if let lastAsset = fetchResult.lastObject {
             let options = PHImageRequestOptions()
-            options.deliveryMode = .HighQualityFormat
-            options.resizeMode = .Fast
-            PHImageManager.defaultManager().requestImageForAsset(
-                lastAsset,
+            options.deliveryMode = .highQualityFormat
+            options.resizeMode = .fast
+            PHImageManager.default().requestImage(
+                for: lastAsset,
                 targetSize: PhotoMemo.imageSize,
-                contentMode: .AspectFit,
+                contentMode: .aspectFit,
                 options: options,
                 resultHandler: { (image, info) -> Void in
-                    let result = self.record!.addPhotoMemo(image, creationDate: lastAsset.creationDate, shouldScaleDown: false)
+                    let result = self.record!.addPhotoMemo(image!, creationDate: lastAsset.creationDate!, shouldScaleDown: false)
                     if result == true {
                         // reload collectionView
                         self.loadPhotoMemos()
                         self.photoMemosCollectionView.reloadData()
                         // prompt for success
-                        popupPrompt("照片已添加", self.view)
+                        popupPrompt("照片已添加", inView: self.view)
                     }
                 })
         }
@@ -130,7 +132,7 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     
     @IBOutlet weak var dateButton: UIButton! {
         didSet {
-            dateButton.setTitle(NSDateFormatter.localizedStringFromDate(record!.date, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+            dateButton.setTitle(DateFormatter.localizedString(from: record!.date as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
         }
     }
     
@@ -474,8 +476,8 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
 
     @IBOutlet weak var conditionDescriptionTextView: UITextView! {
         didSet {
-            var borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
-            conditionDescriptionTextView.layer.borderColor = borderColor.CGColor
+            let borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+            conditionDescriptionTextView.layer.borderColor = borderColor.cgColor
             conditionDescriptionTextView.layer.cornerRadius = 5.0
             conditionDescriptionTextView.layer.borderWidth = 0.5
             conditionDescriptionTextView.text = record!.g("conditionDescription")
@@ -484,8 +486,8 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     
     @IBOutlet weak var commentTextView: UITextView! {
         didSet {
-            var borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
-            commentTextView.layer.borderColor = borderColor.CGColor
+            let borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+            commentTextView.layer.borderColor = borderColor.cgColor
             commentTextView.layer.cornerRadius = 5.0
             commentTextView.layer.borderWidth = 0.5
             commentTextView.text = record!.g("comment")
@@ -494,8 +496,8 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
 
     @IBOutlet weak var preliminaryDiagnosisTextView: UITextView! {
         didSet {
-            var borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
-            preliminaryDiagnosisTextView.layer.borderColor = borderColor.CGColor
+            let borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+            preliminaryDiagnosisTextView.layer.borderColor = borderColor.cgColor
             preliminaryDiagnosisTextView.layer.cornerRadius = 5.0
             preliminaryDiagnosisTextView.layer.borderWidth = 0.5
             preliminaryDiagnosisTextView.text = record!.g("preliminaryDiagnosis")
@@ -504,8 +506,8 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
 
     @IBOutlet weak var dosageTextView: UITextView! {
         didSet {
-            var borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
-            dosageTextView.layer.borderColor = borderColor.CGColor
+            let borderColor : UIColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+            dosageTextView.layer.borderColor = borderColor.cgColor
             dosageTextView.layer.cornerRadius = 5.0
             dosageTextView.layer.borderWidth = 0.5
             dosageTextView.text = record!.g("dosage")
@@ -515,8 +517,8 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     @IBOutlet weak var operationPerfomedSwitch: UISwitch! {
         didSet {
             operationPerfomedSwitch.setOn(record!.operationPerformed, animated: true)
-            operationNameTextField.hidden = !(record!.operationPerformed)
-            operationDateButton.hidden = !(record!.operationPerformed)
+            operationNameTextField.isHidden = !(record!.operationPerformed)
+            operationDateButton.isHidden = !(record!.operationPerformed)
         }
     }
     
@@ -531,7 +533,7 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     @IBOutlet weak var operationDateButton: UIButton! {
         didSet {
             if record != nil {
-                operationDateButton.setTitle(NSDateFormatter.localizedStringFromDate(record!.operationDate, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+                operationDateButton.setTitle(DateFormatter.localizedString(from: record!.operationDate as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
             }
         }
     }
@@ -544,7 +546,7 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     
     @IBOutlet weak var reportForShareTextView: UITextView! {
         didSet {
-            reportForShareTextView.layer.borderColor = CaseNoteConstants.borderColor.CGColor
+            reportForShareTextView.layer.borderColor = CaseApp.borderColor.cgColor
             reportForShareTextView.layer.cornerRadius = 5.0
             reportForShareTextView.layer.borderWidth = 0.5
             reportForShareTextView.text = record!.g("reportForShare")
@@ -556,56 +558,56 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     
     // MARK: - Actions
     
-    @IBAction func generateReportForShareButtonPressed(sender: UIButton) {
+    @IBAction func generateReportForShareButtonPressed(_ sender: UIButton) {
         if reportForShareTextView.text.isEmpty {
             self.reportForShareTextView.text = self.record!.report
         } else { // 非空弹出警示
-            var alert = UIAlertController(
+            let alert = UIAlertController(
                 title: "将使用模板自动生成的分享内容覆盖现有内容，确定？",
                 message: nil,
-                preferredStyle: .Alert
+                preferredStyle: .alert
             )
             
             alert.addAction(UIAlertAction(
                 title: "取消",
-                style: .Cancel,
+                style: .cancel,
                 handler: nil
                 ))
             
             alert.addAction(UIAlertAction(
-                title: "确定", style: .Default, handler: { (action) -> Void in
+                title: "确定", style: .default, handler: { (action) -> Void in
                     self.reportForShareTextView.text = self.record!.report
                     self.record!.s("reportForShare", value: self.reportForShareTextView.text)
             }))
             
-            presentViewController(alert, animated: true, completion: nil)
+            present(alert, animated: true, completion: nil)
         }
     }
     
-    @IBAction func operationPerformedSwitch(sender: UISwitch) {
-        if sender.on { // 打开时重置手术日期为检查日期
+    @IBAction func operationPerformedSwitch(_ sender: UISwitch) {
+        if sender.isOn { // 打开时重置手术日期为检查日期
             record!.sOperationDate(record!.date)
-            operationDateButton.setTitle(NSDateFormatter.localizedStringFromDate(record!.operationDate, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+            operationDateButton.setTitle(DateFormatter.localizedString(from: record!.operationDate as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
         }
-        record!.sOperationPerformed(sender.on)
-        operationNameTextField.hidden = !(sender.on)
-        operationDateButton.hidden = !(sender.on)
+        record!.sOperationPerformed(sender.isOn)
+        operationNameTextField.isHidden = !(sender.isOn)
+        operationDateButton.isHidden = !(sender.isOn)
     }
     
     
     
     // MARK: - Add photomemo
     
-    @IBAction func addPhotoMemo(sender: UIBarButtonItem) {
-        var alert = UIAlertController(
+    @IBAction func addPhotoMemo(_ sender: UIBarButtonItem) {
+        let alert = UIAlertController(
             title: nil,
             message: nil,
-            preferredStyle: .ActionSheet
+            preferredStyle: .actionSheet
         )
         
         alert.addAction(UIAlertAction(
             title: "相册中最新一张照片",
-            style: .Default,
+            style: .default,
             handler: {action in
                 self.addLastPhotoInLibraryToPhotoMemo()
             }
@@ -613,85 +615,86 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         
         alert.addAction(UIAlertAction(
             title: "拍摄照片",
-            style: .Default,
+            style: .default,
             handler: {action in
                 if self.imagePickerController != nil {
-                    self.presentViewController(self.imagePickerController!, animated: true, completion: nil)
+                    print("here")
+                    self.present(self.imagePickerController!, animated: true, completion: nil)
                 }
             }
             ))
         
         alert.addAction(UIAlertAction(
             title: "从相册中选择",
-            style: .Default,
+            style: .default,
             handler: {action in
                 let qbImagePickerController = QBImagePickerController()
-                qbImagePickerController.mediaType = .Image
+                qbImagePickerController.mediaType = .image
                 qbImagePickerController.allowsMultipleSelection = true
                 qbImagePickerController.prompt = "选择照片(可多选)"
                 qbImagePickerController.showsNumberOfSelectedAssets = true
                 qbImagePickerController.delegate = self
-                self.presentViewController(qbImagePickerController, animated: true, completion: nil)
+                self.present(qbImagePickerController, animated: true, completion: nil)
             }
             ))
         
         alert.addAction(UIAlertAction(
             title: "取消",
-            style: .Cancel,
+            style: .cancel,
             handler: nil
             ))
         
-        alert.modalPresentationStyle = .Popover
+        alert.modalPresentationStyle = .popover
         let ppc = alert.popoverPresentationController
         ppc?.barButtonItem = addPhotoMemoBarButtonItem
-        presentViewController(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
     }
 
     // QBImagePickerViewController Delegate
     // 从相册多选时使用
-    func qb_imagePickerController(imagePickerController: QBImagePickerController!, didFinishPickingAssets assets: [AnyObject]!) {
-
+    func qb_imagePickerController(_ imagePickerController: QBImagePickerController!, didFinishPickingAssets assets: [Any]!) {
+        
         progressHUD.show()
         var addCnt: Int = 0 // number of photo successfully added
         var gotCnt: Int = 0 // number of photo got from requested
         
         for asset in (assets as! [PHAsset]) {
             let options = PHImageRequestOptions()
-            options.deliveryMode = .HighQualityFormat
-            options.resizeMode = .Fast
-            PHImageManager.defaultManager().requestImageForAsset(
-                asset,
+            options.deliveryMode = .highQualityFormat
+            options.resizeMode = .fast
+            PHImageManager.default().requestImage(
+                for: asset,
                 targetSize: PhotoMemo.imageSize,
-                contentMode: .AspectFit,
+                contentMode: .aspectFit,
                 options: options,
                 resultHandler: { (image, info) -> Void in
-                    gotCnt++
-//                    println("got \(gotCnt)")
-                    let result = self.record!.addPhotoMemo(image, creationDate: asset.creationDate, shouldScaleDown: false)
+                    gotCnt += 1
+//                    print("got \(gotCnt)")
+                    let result = self.record!.addPhotoMemo(image!, creationDate: asset.creationDate!, shouldScaleDown: false)
                     if result == true {
-                        addCnt++
+                        addCnt += 1
                     }
                     if gotCnt == assets.count { // all photo got
-//                        println("reload collectionView")
+//                        print("reload collectionView")
                         // reload collectionView
                         self.loadPhotoMemos()
                         self.photoMemosCollectionView.reloadData()
                         self.progressHUD.hide()
-                        popupPrompt("\(addCnt)张照片已添加", self.view)
+                        popupPrompt("\(addCnt)张照片已添加", inView: self.view)
                     }
                 })
             }
-        imagePickerController.dismissViewControllerAnimated(true, completion: nil)
+        imagePickerController.dismiss(animated: true, completion: nil)
     }
     
-    func qb_imagePickerControllerDidCancel(imagePickerController: QBImagePickerController!) {
-        imagePickerController.dismissViewControllerAnimated(true, completion: nil)
+    func qb_imagePickerControllerDidCancel(_ imagePickerController: QBImagePickerController!) {
+        imagePickerController.dismiss(animated: true, completion: nil)
     }
     
     
     // UIImagePickerControllerDelegate
     // 使用相机拍摄照片时使用
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         
         var result = false
         
@@ -701,11 +704,11 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         }
         
         if image != nil {
-            result = record!.addPhotoMemo(image!, creationDate: NSDate(), shouldScaleDown: true)
+            result = record!.addPhotoMemo(image!, creationDate: Date(), shouldScaleDown: true)
             if result == true {
                 // also save photo to camera roll
-                if picker.sourceType == .Camera {
-                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                if picker.sourceType == .camera {
+                    UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
                 }
                 // reload collectionView
                 self.loadPhotoMemos()
@@ -719,27 +722,27 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         } else {
             message = "照片添加失败，请再次尝试"
         }
-        picker.dismissViewControllerAnimated(true, completion: {popupPrompt(message, self.view)})
+        picker.dismiss(animated: true, completion: {popupPrompt(message, inView: self.view)})
     }
     
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        picker.dismissViewControllerAnimated(true, completion: nil)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
     }
     
     
     // MARK: - CollectionView DataSource & Delegate
     
-    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
     }
     
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return photoMemos.count
     }
     
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if collectionView == photoMemosCollectionView {
-            let cell = collectionView.dequeueReusableCellWithReuseIdentifier("photoCell", forIndexPath: indexPath) as! PhotoMemoCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as! PhotoMemoCollectionViewCell
             // display thumbnail image here
             cell.thumbnailImageView.image = photoMemos[indexPath.row].thumbnailImage
             return cell
@@ -749,37 +752,37 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     }
     
     
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        println("selected: \(indexPath.row)")
-        println("file: \(photoMemos[indexPath.row].urlString)")
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        print("selected: \(indexPath.row)")
+//        print("file: \(photoMemos[indexPath.row].urlString)")
         var photos = [IDMPhoto]()
         for pm in photoMemos {
             if let filePath = pm.urlString {
-                var p = IDMPhoto(filePath: filePath)
-                p.caption = pm.caption
-                photos.append(p)
+                let p = IDMPhoto(filePath: filePath)
+                p?.caption = pm.caption
+                photos.append(p!)
             }
         }
         let browser = IDMPhotoBrowser(photos: photos)
-        browser.delegate = self
-        browser.displayArrowButton = true
-        browser.displayDoneButton = true
-        browser.usePopAnimation = true
+        browser?.delegate = self
+        browser?.displayArrowButton = true
+        browser?.displayDoneButton = true
+        browser?.usePopAnimation = true
 
-        browser.actionButtonTitles = ["删除"]
-        browser.setInitialPageIndex(UInt(indexPath.row))
-        presentViewController(browser, animated: true, completion: nil)
+        browser?.actionButtonTitles = ["删除"]
+        browser?.setInitialPageIndex(UInt(indexPath.row))
+        present(browser!, animated: true, completion: nil)
     }
     
     // MARK: - IDMPhotoBrowser Delegate
-    func photoBrowser(photoBrowser: IDMPhotoBrowser!, didDismissActionSheetWithButtonIndex buttonIndex: UInt, photoIndex: UInt) {
+    func photoBrowser(_ photoBrowser: IDMPhotoBrowser!, didDismissActionSheetWithButtonIndex buttonIndex: UInt, photoIndex: UInt) {
         if buttonIndex == 0 { // delete photo
-            dismissViewControllerAnimated(true, completion: nil)
+            dismiss(animated: true, completion: nil)
             // delete photomemo
-            var pm = photoMemos[Int(photoIndex)]
+            let pm = photoMemos[Int(photoIndex)]
             pm.removeFromDB()
             // reload data for collectionView
-            self.photoMemos.removeAtIndex(Int(photoIndex))
+            self.photoMemos.remove(at: Int(photoIndex))
             self.photoMemosCollectionView.reloadData()
 
         }
@@ -814,20 +817,20 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
 //    }
     
     // 按完成后撤销键盘
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.resignFirstResponder()
         return true
     }
 
-    func textFieldDidEndEditing(textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         if textField == operationNameTextField {
-            record!.s("operationName", value: textField.text)
+            record!.s("operationName", value: textField.text!)
         }
     }
 
     // MARK: - TextView Delegate
 
-    func textViewDidEndEditing(textView: UITextView) {
+    func textViewDidEndEditing(_ textView: UITextView) {
         switch textView {
         case commentTextView:
             record!.s("comment", value: textView.text)
@@ -851,10 +854,10 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         super.viewDidLoad()
         setTitle()
         
-        if UIImagePickerController.isSourceTypeAvailable(.Camera) {
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
             imagePickerController = UIImagePickerController()
-            imagePickerController!.sourceType = .Camera
-            imagePickerController!.mediaTypes = [kUTTypeImage]
+            imagePickerController!.sourceType = .camera
+            imagePickerController!.mediaTypes = [kUTTypeImage as String]
             imagePickerController!.allowsEditing = false // 如果允许编辑，总是得到正方形照片
             imagePickerController!.delegate = self
         }
@@ -864,12 +867,12 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         progressHUD.hide()
     }
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 //        setReportForShareTextViewHeight()
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
         // 结束编辑状态，导致如有在编辑中的textField或textView，对应的endEditing()会被调用，从而可以在其中获得更新的数据
@@ -878,21 +881,21 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         // 仅当此View被销毁(unload)时才save更改的record. 然而当弹出modal view输入选项时，willDisappear()也会被调用，因此需要判断。SO上提供的方法都无效，这里找到的解决方案是：see if self is visibleViewController, if it is, the back button is pressed and self is popped form the stack. otherwise, self is not visible, it means another view is popped on it and the record should not been saved
         // 另：unload()似乎已经不能用了
 //        if self.navigationController?.visibleViewController == self {
-//            println("Go back")
+//            print("Go back")
 //            if recordIsUpdated == true {
 //                record!.saveToDB()
-//                println("record updated")
+//                print("record updated")
 //            }
 //        }
     }
     
     // MARK: - TableView Delegate
     
-    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableViewAutomaticDimension
     }
     
-    override func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         
         switch indexPath.section {
         case 0:
@@ -916,14 +919,15 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     
     // MARK: - Navigation
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
 
         if segue.identifier == "showChoices" {
             if let senderLabel = sender as? UILabel {
                 currentOperatedLabel = senderLabel
                 let tag = senderLabel.tag
-                println("segue with tag: \(tag)")
-                let itemVC = segue.destinationViewController.topViewController as! RecordItemTableViewController
+                print("segue with tag: \(tag)")
+                let nav = segue.destination as! UINavigationController
+                let itemVC = nav.topViewController as! RecordItemTableViewController
                 itemVC.senderTag = tag
                 itemVC.basicChoices = Record.tagToItems[tag]!.basicChoices
                 itemVC.hasCustomText = Record.tagToItems[tag]!.hasCustomText
@@ -940,7 +944,7 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         }
         
         else if segue.identifier == "showRecordDatePicker" {
-            let datePickerVC = segue.destinationViewController.topViewController as! DatePickerViewController
+            let datePickerVC = (segue.destination as! UINavigationController).topViewController as! DatePickerViewController
             if record != nil {
                 datePickerVC.fromVC = "RecordTVCRecordDate"
                 datePickerVC.selectedDate = record!.date
@@ -948,7 +952,7 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
         }
         
         else if segue.identifier == "showOperationDatePicker" {
-            let datePickerVC = segue.destinationViewController.topViewController as! DatePickerViewController
+            let datePickerVC = (segue.destination as! UINavigationController).topViewController as! DatePickerViewController
             if record != nil {
                 datePickerVC.fromVC = "RecordTVCOperationDate"
                 datePickerVC.selectedDate = record!.operationDate
@@ -957,14 +961,14 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
     }
     
     // Unwind segue
-    @IBAction func goBackToRecordViewController(segue: UIStoryboardSegue) {
+    @IBAction func goBackToRecordViewController(_ segue: UIStoryboardSegue) {
         
         // from RecordItemTableViewController
-        if let itemVC = segue.sourceViewController as? RecordItemTableViewController where segue.identifier == "backToRecord" {
+        if let itemVC = segue.source as? RecordItemTableViewController, segue.identifier == "backToRecord" {
 
             switch itemVC.operationState {
             case "done":
-                println("back from tag: \(itemVC.senderTag) with done, text: \(itemVC.resultText)")
+                print("back from tag: \(itemVC.senderTag!) with done, text: \(itemVC.resultText!)")
                 // update record and UI
                 if itemVC.senderTag != nil && itemVC.resultText != nil {
                     let isCustomText = itemVC.selectedRow == nil
@@ -972,18 +976,18 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
                 }
                 
             case "cancel":
-                println("back from tag: \(itemVC.senderTag) with cancel")
+                print("back from tag: \(itemVC.senderTag!) with cancel")
                 
             default: break
             }
         }
         
         // from DatePickerViewController
-        else if let datePickerVC = segue.sourceViewController as? DatePickerViewController {
+        else if let datePickerVC = segue.source as? DatePickerViewController {
             if segue.identifier == "backToRecordDate" {
                 if datePickerVC.selectedDate != nil {
                     record!.sDate(datePickerVC.selectedDate!)
-                    dateButton.setTitle(NSDateFormatter.localizedStringFromDate(datePickerVC.selectedDate!, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+                    dateButton.setTitle(DateFormatter.localizedString(from: datePickerVC.selectedDate! as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
                     if !isNewRecord {
                         setTitle()
                     }
@@ -991,7 +995,7 @@ class RecordTableViewController: UITableViewController, UITextFieldDelegate, UIT
             } else if segue.identifier == "backToOperationDate" {
                 if datePickerVC.selectedDate != nil {
                     record!.sOperationDate(datePickerVC.selectedDate!)
-                    operationDateButton.setTitle(NSDateFormatter.localizedStringFromDate(datePickerVC.selectedDate!, dateStyle: .LongStyle, timeStyle: .NoStyle), forState: .Normal)
+                    operationDateButton.setTitle(DateFormatter.localizedString(from: datePickerVC.selectedDate! as Date, dateStyle: .long, timeStyle: .none), for: UIControlState())
                 }
             }
             

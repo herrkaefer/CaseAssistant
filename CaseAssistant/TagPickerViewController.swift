@@ -53,11 +53,11 @@ class TagPickerViewController: UIViewController, UITableViewDataSource, UITableV
         super.viewDidLoad()
         
         cancelAddTabButtonWidthConstraint.constant = 0
-        cancelAddTagButton.hidden = true
+        cancelAddTagButton.isHidden = true
         
         // register For Keyboard Notifications
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardDidShow:", name: UIKeyboardDidShowNotification, object: self.view.window)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillHide:", name: UIKeyboardWillHideNotification, object: self.view.window)
+        NotificationCenter.default.addObserver(self, selector: #selector(TagPickerViewController.keyboardDidShow(_:)), name: NSNotification.Name.UIKeyboardDidShow, object: self.view.window)
+        NotificationCenter.default.addObserver(self, selector: #selector(TagPickerViewController.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: self.view.window)
     }
 
     override func viewWillLayoutSubviews() {
@@ -67,32 +67,32 @@ class TagPickerViewController: UIViewController, UITableViewDataSource, UITableV
         viewOriginalY = nil // 当设备旋转，充值summaryTextViewOriginalFrame为nil，强迫在keyboardDidShow()中重新为summaryTextView计算新的frame
     }
     
-    func keyboardDidShow(n: NSNotification) {
+    func keyboardDidShow(_ n: Notification) {
         if let userInfo = n.userInfo {
-            if let kbSize = userInfo[UIKeyboardFrameEndUserInfoKey]?.CGRectValue().size {
-                if viewOriginalY == nil { // first shown
-                    println("first shown")
-                    addTagTextField.placeholder = "输入标签，不要包含空格"
-                    showCancelAddTagButton()
-                    
-                    // change bottomView's y position
-                    viewOriginalY = bottomView.frame.origin.y
+            let kbSize = (userInfo[UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue.size
+            
+            if viewOriginalY == nil { // first shown
+                print("first shown")
+                addTagTextField.placeholder = "输入标签，不要包含空格"
+                showCancelAddTagButton()
+                
+                // change bottomView's y position
+                viewOriginalY = bottomView.frame.origin.y
 //                    if let rect = userInfo[UIKeyboardFrameEndUserInfoKey]?.CGRectValue() {
-//                        println("keyboard y: \(rect.minY)")
+//                        print("keyboard y: \(rect.minY)")
 //                    bottomView.frame.origin.y = rect.minY - 44
 //                    }
-                    bottomView.frame.origin.y -= kbSize.height
-                    
-                } else if (viewOriginalY! - bottomView.frame.origin.y) != kbSize.height { // keyboard height changed
-                    println("change")
-                    bottomView.frame.origin.y = viewOriginalY! - kbSize.height
-                }
+                bottomView.frame.origin.y -= kbSize.height
                 
+            } else if (viewOriginalY! - bottomView.frame.origin.y) != kbSize.height { // keyboard height changed
+                print("change")
+                bottomView.frame.origin.y = viewOriginalY! - kbSize.height
             }
         }
     }
     
-    func keyboardWillHide(n: NSNotification) {
+    
+    func keyboardWillHide(_ n: Notification) {
         // set back summaryTextView's frame
         if viewOriginalY != nil {
             addTagTextField.placeholder = "添加标签"
@@ -103,14 +103,15 @@ class TagPickerViewController: UIViewController, UITableViewDataSource, UITableV
         }
     }
     
+    
     func hideCancelAddTagButton() {
         cancelAddTabButtonWidthConstraint.constant = 0
-        cancelAddTagButton.hidden = true
+        cancelAddTagButton.isHidden = true
     }
     
     func showCancelAddTagButton() {
         cancelAddTabButtonWidthConstraint.constant = 55
-        cancelAddTagButton.hidden = false
+        cancelAddTagButton.isHidden = false
     }
     
     func commitEditing() {
@@ -126,17 +127,17 @@ class TagPickerViewController: UIViewController, UITableViewDataSource, UITableV
  
     // MARK: - IBActions
     
-    @IBAction func doneButtonPressed(sender: UIBarButtonItem) {
+    @IBAction func doneButtonPressed(_ sender: UIBarButtonItem) {
         commitEditing()
-        performSegueWithIdentifier("backToPatientInfo", sender: self)
+        performSegue(withIdentifier: "backToPatientInfo", sender: self)
     }
     
-    @IBAction func cancelButtonPressed(sender: UIBarButtonItem) {
-        performSegueWithIdentifier("backToPatientInfo", sender: self)
+    @IBAction func cancelButtonPressed(_ sender: UIBarButtonItem) {
+        performSegue(withIdentifier: "backToPatientInfo", sender: self)
     }
     
 
-    @IBAction func cancelAddTagButtonPressed(sender: UIButton) {
+    @IBAction func cancelAddTagButtonPressed(_ sender: UIButton) {
         self.view.endEditing(true)
         addTagTextField.text = ""
         hideCancelAddTagButton()
@@ -145,18 +146,18 @@ class TagPickerViewController: UIViewController, UITableViewDataSource, UITableV
     // MARK: - TextField Delegate
 
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         // add new tag
         let newTagName = addTagTextField.text
-        if !newTagName.isEmpty {
-            if Tag.tagExistsByName(newTagName) {
-                popupPrompt("标签已经存在", self.view)
+        if !(newTagName?.isEmpty)! {
+            if Tag.tagExistsByName(newTagName!) {
+                popupPrompt("标签已经存在", inView: self.view)
             } else {
                 commitEditing() // 将之前的选择更新到patient
-                patient!.addTagByName(newTagName) // 无论标签存在与否，都添加到患者
+                patient!.addTagByName(newTagName!) // 无论标签存在与否，都添加到患者
                 loadData()
                 tableView.reloadData()
-                cancelBarButtonItem.enabled = false // 新增标签后，disable "取消"，因意义模糊
+                cancelBarButtonItem.isEnabled = false // 新增标签后，disable "取消"，因意义模糊
             }
         }
         
@@ -167,40 +168,44 @@ class TagPickerViewController: UIViewController, UITableViewDataSource, UITableV
         return true
     }
     
+    
     // MARK: - Table view data source & delegate
 
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tags.count
     }
 
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("tagCell", forIndexPath: indexPath) as! UITableViewCell
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "tagCell", for: indexPath) 
 
         cell.textLabel?.text = tags[indexPath.row].name
         if selectionStatus[indexPath.row] == true {
-            cell.accessoryType = UITableViewCellAccessoryType.Checkmark
+            cell.accessoryType = UITableViewCellAccessoryType.checkmark
         } else {
-            cell.accessoryType = UITableViewCellAccessoryType.None
+            cell.accessoryType = UITableViewCellAccessoryType.none
         }
 
         return cell
     }
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 
         if selectionStatus[indexPath.row] == true {
             selectionStatus[indexPath.row] = false
-            if let cell = tableView.cellForRowAtIndexPath(indexPath) {
-                cell.accessoryType = UITableViewCellAccessoryType.None
+            if let cell = tableView.cellForRow(at: indexPath) {
+                cell.accessoryType = UITableViewCellAccessoryType.none
             }
         } else {
             selectionStatus[indexPath.row] = true
-            if let cell = tableView.cellForRowAtIndexPath(indexPath) {
-                cell.accessoryType = UITableViewCellAccessoryType.Checkmark
+            if let cell = tableView.cellForRow(at: indexPath) {
+                cell.accessoryType = UITableViewCellAccessoryType.checkmark
             }
         }
     }

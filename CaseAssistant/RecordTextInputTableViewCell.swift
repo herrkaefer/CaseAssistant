@@ -26,7 +26,7 @@ class RecordTextInputTableViewCell: UITableViewCell {
 
     @IBOutlet weak var customTextView: UITextView! {
         didSet {
-            customTextView.layer.borderColor = CaseNoteConstants.borderColor.CGColor
+            customTextView.layer.borderColor = CaseApp.borderColor.cgColor
             customTextView.layer.cornerRadius = 5.0
             customTextView.layer.borderWidth = 0.5
             

@@ -1,30 +1,9 @@
 PODS:
-  - AFNetworking (2.5.4):
-    - AFNetworking/NSURLConnection (= 2.5.4)
-    - AFNetworking/NSURLSession (= 2.5.4)
-    - AFNetworking/Reachability (= 2.5.4)
-    - AFNetworking/Security (= 2.5.4)
-    - AFNetworking/Serialization (= 2.5.4)
-    - AFNetworking/UIKit (= 2.5.4)
-  - AFNetworking/NSURLConnection (2.5.4):
-    - AFNetworking/Reachability
-    - AFNetworking/Security
-    - AFNetworking/Serialization
-  - AFNetworking/NSURLSession (2.5.4):
-    - AFNetworking/Reachability
-    - AFNetworking/Security
-    - AFNetworking/Serialization
-  - AFNetworking/Reachability (2.5.4)
-  - AFNetworking/Security (2.5.4)
-  - AFNetworking/Serialization (2.5.4)
-  - AFNetworking/UIKit (2.5.4):
-    - AFNetworking/NSURLConnection
-    - AFNetworking/NSURLSession
   - DACircularProgress (2.3.1)
-  - IDMPhotoBrowser (1.6.2):
-    - AFNetworking
+  - IDMPhotoBrowser (1.11.1):
     - DACircularProgress
     - pop
+    - SDWebImage (= 4.0.0)
   - KLCPopup (1.0)
   - MMDrawerController (0.6.0):
     - MMDrawerController/Core (= 0.6.0)
@@ -38,15 +17,18 @@ PODS:
     - MMDrawerController/Core
   - MMDrawerController/Subclass (0.6.0):
     - MMDrawerController/Core
-  - PNChart (0.8.5):
+  - PNChart (0.8.9):
     - UICountingLabel (~> 1.2.0)
-  - pop (1.0.7)
-  - QBImagePickerController (3.2.0)
-  - Realm (0.93.2):
-    - Realm/Headers (= 0.93.2)
-  - Realm/Headers (0.93.2)
-  - RealmSwift (0.93.2):
-    - Realm (= 0.93.2)
+  - pop (1.0.9)
+  - QBImagePickerController (3.4.0)
+  - Realm (2.7.0):
+    - Realm/Headers (= 2.7.0)
+  - Realm/Headers (2.7.0)
+  - RealmSwift (2.7.0):
+    - Realm (= 2.7.0)
+  - SDWebImage (4.0.0):
+    - SDWebImage/Core (= 4.0.0)
+  - SDWebImage/Core (4.0.0)
   - UICountingLabel (1.2.0)
 
 DEPENDENCIES:
@@ -58,16 +40,18 @@ DEPENDENCIES:
   - RealmSwift
 
 SPEC CHECKSUMS:
-  AFNetworking: 05edc0ac4c4c8cf57bcf4b84be5b0744b6d8e71e
   DACircularProgress: 4dd437c0fc3da5161cb289e07ac449493d41db71
-  IDMPhotoBrowser: ebbfa6690456b72dd92d93b7bc11d71519f4d06d
+  IDMPhotoBrowser: 14505b91019a96e36479606cb582f864446dae01
   KLCPopup: 76c5a19227977f1e53d85236f9ef42257c168d98
   MMDrawerController: e3a54a5570388463ad3b36975251575b50c4e1a0
-  PNChart: 353d27a13634c94d090ed65909776d5ceab55f31
-  pop: 628ffc631644601567ee8bfaaaea493ebd7d0923
-  QBImagePickerController: 75b3857b1307a3c01ce486559bc294f802ddec6c
-  Realm: 2fdd0ae74f730e190384e0338d8a0d3654df8220
-  RealmSwift: 231b064da9f98b1c4f325fe1f1cb8756aae2b8d6
+  PNChart: 84774d225c2126ded6c93d4dbe6ae98c3a73c2d2
+  pop: f667631a5108a2e60d9e8797c9b32ddaf2080bce
+  QBImagePickerController: d54cf93db6decf26baf6ed3472f336ef35cae022
+  Realm: 07e5d3a9e0e41d65fd5f9f05150ed6295d0f093b
+  RealmSwift: 6d06425d3900c86473c4f323bf6949b43fca22bc
+  SDWebImage: 76a6348bdc74eb5a55dd08a091ef298e56b55e41
   UICountingLabel: 1db4e7d023e1762171eb226d6dff47a7a84f27aa
 
-COCOAPODS: 0.37.2
+PODFILE CHECKSUM: a1cdf0fdc8ee5cdbe46578ba7cf926d40c21c2a2
+
+COCOAPODS: 1.2.1

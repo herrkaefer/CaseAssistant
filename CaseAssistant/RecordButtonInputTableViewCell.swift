@@ -12,7 +12,7 @@ class RecordButtonInputTableViewCell: UITableViewCell {
 
     var choiceText: String? {
         didSet {
-            choiceButton.setTitle(choiceText, forState: .Normal)
+            choiceButton.setTitle(choiceText, for: UIControlState())
 //            checkboxImageView.image = UIImage(named: "checkbox-blank-22")
         }
     }

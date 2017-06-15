@@ -21,13 +21,13 @@ class ImageSelecterCollectionViewController: UICollectionViewController {
     let imageForUnselected: UIImage? = nil//UIImage(named: "checkmark-blank-24")
     
     // called by presenting VC
-    func setInitialSelectionStatus(status: [[Bool]]) {
+    func setInitialSelectionStatus(_ status: [[Bool]]) {
         selectionStatusOfImages = status
         numberOfSelectedImages = 0
         for s1 in status {
             for s2 in s1 {
                 if s2 == true {
-                    numberOfSelectedImages++
+                    numberOfSelectedImages += 1
                 }
             }
         }
@@ -56,17 +56,17 @@ class ImageSelecterCollectionViewController: UICollectionViewController {
 
     // MARK: UICollectionViewDataSource
 
-    override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return imageItems.count
     }
 
 
-    override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return imageItems[section].count
     }
 
-    override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("imageSelecterCell", forIndexPath: indexPath) as! ImageSelecterCollectionViewCell
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "imageSelecterCell", for: indexPath) as! ImageSelecterCollectionViewCell
         cell.photoImageView.image = imageItems[indexPath.section][indexPath.row]
         if selectionStatusOfImages[indexPath.section][indexPath.row] == true {
             cell.statusImageView.image = imageForSelected
@@ -79,11 +79,11 @@ class ImageSelecterCollectionViewController: UICollectionViewController {
     // MARK: UICollectionViewDelegate
     
     // section header and footer view
-    override func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {
+    override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         
         if (kind == UICollectionElementKindSectionHeader) {
-            let headerView = collectionView.dequeueReusableSupplementaryViewOfKind(UICollectionElementKindSectionHeader, withReuseIdentifier: "imageSelectorHeaderCell", forIndexPath: indexPath) as! ImageSelecterCollectionHeaderView
-            let title = NSDateFormatter.localizedStringFromDate(patient!.records[indexPath.section].date, dateStyle: .LongStyle, timeStyle: .NoStyle)
+            let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: "imageSelectorHeaderCell", for: indexPath) as! ImageSelecterCollectionHeaderView
+            let title = DateFormatter.localizedString(from: patient!.records[indexPath.section].date, dateStyle: .long, timeStyle: .none)
             headerView.titleLabel.text = title
             
             return headerView
@@ -95,16 +95,16 @@ class ImageSelecterCollectionViewController: UICollectionViewController {
         }
     }
 
-    override func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        let cell = collectionView.cellForItemAtIndexPath(indexPath) as! ImageSelecterCollectionViewCell
-        println("select \(indexPath.section), \(indexPath.row)")
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath) as! ImageSelecterCollectionViewCell
+        print("select \(indexPath.section), \(indexPath.row)")
         if selectionStatusOfImages[indexPath.section][indexPath.row] == true {
             selectionStatusOfImages[indexPath.section][indexPath.row] = false
-            numberOfSelectedImages--
+            numberOfSelectedImages -= 1
             cell.statusImageView.image = imageForUnselected
         } else {
             selectionStatusOfImages[indexPath.section][indexPath.row] = true
-            numberOfSelectedImages++
+            numberOfSelectedImages += 1
             cell.statusImageView.image = imageForSelected
         }
     }

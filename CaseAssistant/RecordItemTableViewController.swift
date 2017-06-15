@@ -8,7 +8,7 @@
 
 import UIKit
 
-class RecordItemTableViewController: UITableViewController, UITableViewDelegate, UITextViewDelegate
+class RecordItemTableViewController: UITableViewController, UITextViewDelegate
 {
 
     // MARK: - Variables
@@ -28,7 +28,8 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
     override func viewDidLoad() {
         super.viewDidLoad()
         if basicChoices != nil && resultText != nil {
-            if let ind = find(basicChoices!, resultText!) {
+            if let ind = basicChoices!.index(where: { $0 == resultText! }) {
+//            if let ind = find(basicChoices!, resultText!) {
                 selectedRow = ind
             }
         }
@@ -37,68 +38,69 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
     }
 
  
-    @IBAction func cancel(sender: UIBarButtonItem) {
+    @IBAction func cancel(_ sender: UIBarButtonItem) {
         self.view.endEditing(true)
         operationState = "cancel"
-        performSegueWithIdentifier("backToRecord", sender: self)
+        performSegue(withIdentifier: "backToRecord", sender: self)
     }
 
-    @IBAction func done(sender: UIBarButtonItem) {
+    @IBAction func done(_ sender: UIBarButtonItem) {
         self.view.endEditing(true)
         operationState = "done"
-        performSegueWithIdentifier("backToRecord", sender: self)
+        performSegue(withIdentifier: "backToRecord", sender: self)
     }
     
     // button press
-    @IBAction func chooseIt(sender: UIButton) {
+    @IBAction func chooseIt(_ sender: UIButton) {
 //        println("choose: \(sender.titleLabel?.text)")
         let choice = sender.titleLabel?.text
-        if let currentSelectedRow = find(basicChoices!, choice!) {
+        if let currentSelectedRow = basicChoices!.index(where: { $0 == choice! }) {
+//        if let currentSelectedRow = find(basicChoices!, choice!) {
             if selectedRow != nil {
-                let lastCell = tableView.cellForRowAtIndexPath(NSIndexPath(forRow: selectedRow!, inSection: 0)) as! RecordButtonInputTableViewCell
-                lastCell.accessoryType = UITableViewCellAccessoryType.None
+                let lastCell = tableView.cellForRow(at: IndexPath(row: selectedRow!, section: 0)) as! RecordButtonInputTableViewCell
+                lastCell.accessoryType = UITableViewCellAccessoryType.none
             }
             selectedRow = currentSelectedRow
             resultText = choice
-            let currentCell = tableView.cellForRowAtIndexPath(NSIndexPath(forRow: selectedRow!, inSection: 0)) as! RecordButtonInputTableViewCell
-            currentCell.accessoryType = UITableViewCellAccessoryType.Checkmark
+            let currentCell = tableView.cellForRow(at: IndexPath(row: selectedRow!, section: 0)) as! RecordButtonInputTableViewCell
+            currentCell.accessoryType = UITableViewCellAccessoryType.checkmark
         }
     }
 
     // MARK: - TextView Delegate
     
-    func textViewDidBeginEditing(textView: UITextView) {
+    func textViewDidBeginEditing(_ textView: UITextView) {
         if selectedRow != nil {
-            let lastCell = tableView.cellForRowAtIndexPath(NSIndexPath(forRow: selectedRow!, inSection: 0)) as! RecordButtonInputTableViewCell
-            lastCell.accessoryType = UITableViewCellAccessoryType.None
+            let lastCell = tableView.cellForRow(at: IndexPath(row: selectedRow!, section: 0)) as! RecordButtonInputTableViewCell
+            lastCell.accessoryType = UITableViewCellAccessoryType.none
         }
     
         selectedRow = nil
         resultText = textView.text
         
         if isNumeric == true {
-            textView.keyboardType = UIKeyboardType.NumbersAndPunctuation
+            textView.keyboardType = UIKeyboardType.numbersAndPunctuation
         }
     }
     
-    func textViewDidEndEditing(textView: UITextView) {
+    func textViewDidEndEditing(_ textView: UITextView) {
         resultText = textView.text
     }
     
-    func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         var result = true
         
         if isNumeric == true {
-            let prospectiveText = (textView.text as NSString).stringByReplacingCharactersInRange(range, withString: text)
+            let prospectiveText = (textView.text as NSString).replacingCharacters(in: range, with: text)
             
-            if count(text) > 0 {
-                let disallowedCharacterSet = NSCharacterSet(charactersInString: "0123456789.-+").invertedSet
-                let replacementStringIsLegal = text.rangeOfCharacterFromSet(disallowedCharacterSet) == nil
+            if text.characters.count > 0 {
+                let disallowedCharacterSet = CharacterSet(charactersIn: "0123456789.-+").inverted
+                let replacementStringIsLegal = text.rangeOfCharacter(from: disallowedCharacterSet) == nil
                 
-                let resultingStringLengthIsLegal = count(prospectiveText) <= 6
+                let resultingStringLengthIsLegal = (prospectiveText.characters.count <= 6)
                 
-                let scanner = NSScanner(string: prospectiveText)
-                let resultingTextIsNumeric = scanner.scanDecimal(nil) && scanner.atEnd
+                let scanner = Scanner(string: prospectiveText)
+                let resultingTextIsNumeric = scanner.scanDecimal(nil) && scanner.isAtEnd
                 
                 result = replacementStringIsLegal &&
                     resultingStringLengthIsLegal &&
@@ -111,7 +113,7 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
     
     // MARK: - TableView Data Source
 
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         if hasCustomText == true {
             return 2
         } else {
@@ -119,7 +121,7 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
         }
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0:
             return basicChoices!.count
@@ -131,25 +133,25 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
     }
 
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         switch indexPath.section {
         case 0:
 //            println("buttonInputCell: \(basicChoices)")
-            let cell = tableView.dequeueReusableCellWithIdentifier("buttonInputCell", forIndexPath: indexPath) as! RecordButtonInputTableViewCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "buttonInputCell", for: indexPath) as! RecordButtonInputTableViewCell
             cell.choiceText = basicChoices![indexPath.row]
             if indexPath.row == selectedRow {
 //                cell.checkboxImageView.image = UIImage(named: "checkbox-22")
-                cell.accessoryType = UITableViewCellAccessoryType.Checkmark
+                cell.accessoryType = UITableViewCellAccessoryType.checkmark
             } else {
 //                cell.checkboxImageView.image = UIImage(named: "checkbox-blank-22")
-                cell.accessoryType = UITableViewCellAccessoryType.None
+                cell.accessoryType = UITableViewCellAccessoryType.none
             }
             return cell
             
         case 1:
 //            println("textInputCell")
-            let cell = tableView.dequeueReusableCellWithIdentifier("textInputCell", forIndexPath: indexPath) as! RecordTextInputTableViewCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "textInputCell", for: indexPath) as! RecordTextInputTableViewCell
 
             if selectedRow == nil && resultText != nil {
                 cell.customText = resultText
@@ -158,7 +160,7 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
             }
             
             if isNumeric == true {
-                cell.customTextView.keyboardType = UIKeyboardType.NumbersAndPunctuation
+                cell.customTextView.keyboardType = UIKeyboardType.numbersAndPunctuation
             }
             
             if basicChoices?.isEmpty == true {
@@ -171,7 +173,7 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
         }
     }
 
-    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section == 1 {
             return 94//min(94, UITableViewAutomaticDimension)
         } else {
@@ -183,7 +185,7 @@ class RecordItemTableViewController: UITableViewController, UITableViewDelegate,
 //        return 44
 //    }
     
-    override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if section == 1 {
             var t = "自填"
             if isNumeric == true {

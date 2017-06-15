@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ReportViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UMSocialUIDelegate, UITextFieldDelegate
+class ReportViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate
 {
 
     var patient: Patient? {
@@ -51,7 +51,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
 //            addImageButton.layer.shadowOffset = CGSizeMake(-5, 5)
 //            addImageButton.layer.shadowRadius = 3
 //            addImageButton.layer.shadowOpacity = 0.6
-            addImageButton.setTitle("添加图片 (0)", forState: .Normal)
+            addImageButton.setTitle("添加图片 (0)", for: UIControlState())
         }
     }
     
@@ -71,20 +71,20 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
  
     // MARK: - IBAction
     
-    @IBAction func reportTitleTextFieldEditingChanged(sender: UITextField) {
+    @IBAction func reportTitleTextFieldEditingChanged(_ sender: UITextField) {
         switch sender.tag {
         case 1001:
-            reportTitle = sender.text
+            reportTitle = sender.text!
         case 1002:
-            affiliationOfAuthor = sender.text
+            affiliationOfAuthor = sender.text!
         case 1003:
-            authorName = sender.text
+            authorName = sender.text!
         default:
             break
         }
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         // hide keyboard
         self.resignFirstResponder()
         return true
@@ -108,7 +108,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
     func setReportTitleWithFirstDiagnosis() {
         reportTitle = ""
         if patient != nil {
-//            println("fd: \(patient!.firstDiagnosis)")
+//            print("fd: \(patient!.firstDiagnosis)")
             if let fd = patient!.firstDiagnosis {
                 reportTitle = fd + "一例"
             }
@@ -140,7 +140,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
                 reportItems.append(ReportItem(
                     type: "text",
                     iconImage: recordTextIcon,
-                    header: NSDateFormatter.localizedStringFromDate(r.date, dateStyle: .LongStyle, timeStyle: .NoStyle),
+                    header: DateFormatter.localizedString(from: r.date, dateStyle: .long, timeStyle: .none),
                     content: reportForShare.isEmpty ? r.report : reportForShare,
                     image: nil
                     ))
@@ -150,7 +150,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
                     if selectionStatusOfPhotoMemos[i][j] == true {
                         if let pmImage = pms[j].image {
                             // resize image to fit screen width
-                            let resizedImage =  resizeImage(pmImage, CGSizeMake(tableView.frame.width*0.85, CGFloat.max), true)
+                            let resizedImage =  resizeImage(pmImage, targetSize: CGSize(width: tableView.frame.width*0.85, height: CGFloat.greatestFiniteMagnitude), forDisplay: true)
                             
                             reportItems.append(ReportItem(
                                 type: "image",
@@ -169,7 +169,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
             reportItems.append(ReportItem(type: "text", iconImage: summaryIcon, header: "病例分析与讨论", content: summary.isEmpty ? "无。" : summary, image: nil))
             
         }
-        println("reportitems: \(reportItems.count)")
+        print("reportitems: \(reportItems.count)")
     }
     
     
@@ -184,7 +184,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
         title = "病例分享"
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         tableView.setNeedsLayout()
         tableView.layoutIfNeeded()
         tableView.setNeedsDisplay()
@@ -192,90 +192,100 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     
-    @IBAction func saveImage(sender: UIBarButtonItem) {
+    @IBAction func saveImage(_ sender: UIBarButtonItem) {
         let image = getImageForSharing()
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
         
         // 弹出保存成功提示
-        popupPrompt("图片已保存到手机相册", self.view)
+        popupPrompt("图片已保存到手机相册", inView: self.view)
     }
+    
     
     // MARK: - Sharing
     
-    @IBAction func shareCase(sender: UIButton) {
+    @IBAction func shareCase(_ sender: UIButton) {
         self.view.endEditing(true)
         
-        UMSocialData.defaultData().extConfig.wxMessageType = UMSocialWXMessageTypeImage
+        let image = getImageForSharing()
         
-        let imageForShare = getImageForSharing()
-
-        UMSocialSnsService.presentSnsIconSheetView(
-            self,
-            appKey: nil,
-            shareText: "病例分享@眼科行医手记",
-            shareImage: imageForShare,
-            shareToSnsNames: [UMShareToWechatSession, UMShareToWechatTimeline, UMShareToSina, UMShareToEmail],
-            delegate: self)
+        // set up activity view controller
+        let imageToShare = [ image ]
+        let activityViewController = UIActivityViewController(activityItems: imageToShare, applicationActivities: nil)
+        activityViewController.popoverPresentationController?.sourceView = self.view // so that iPads won't crash
+        
+        // exclude some activity types from the list (optional)
+        activityViewController.excludedActivityTypes = [
+            UIActivityType.airDrop,
+            UIActivityType.postToFacebook,
+            UIActivityType.assignToContact,
+            UIActivityType.addToReadingList,
+            UIActivityType.postToFlickr,
+            UIActivityType.postToVimeo,
+            UIActivityType.openInIBooks,
+            UIActivityType.postToTencentWeibo,
+            UIActivityType.postToTwitter,
+            UIActivityType.print
+        ]
+        
+        // present the activity view controller
+        self.present(activityViewController, animated: true, completion: nil)
     }
     
     
     func getImageForSharing() -> UIImage {
 
-        /*********************************************/
         isSharing = true
         tableView.reloadData()
-        tableView.setNeedsLayout()
-        tableView.layoutIfNeeded()
-        tableView.reloadData()
         
-        // scroll down the tableview from top to bottom
-        tableView.scrollToRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 0), atScrollPosition: UITableViewScrollPosition.Bottom, animated: false)
-        tableView.scrollToRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 1), atScrollPosition: UITableViewScrollPosition.Bottom, animated: false)
-        for i in 0..<reportItems.count {
-            tableView.scrollToRowAtIndexPath(NSIndexPath(forRow: i, inSection: 2), atScrollPosition: UITableViewScrollPosition.Bottom, animated: false)
-        }
-        tableView.scrollToRowAtIndexPath(NSIndexPath(forRow: 0, inSection: 3), atScrollPosition: UITableViewScrollPosition.Bottom, animated: false)
-
-        /*********************************************/
+        let image = self.tableView.screenshot!
         
-        let oldFrame = tableView.frame
-        tableView.frame = CGRectMake(0, 0, tableView.contentSize.width, tableView.contentSize.height)
-        
-//        println("tableView.frame.height: \(tableView.frame.height)")
-//        println("tableView.bounds.height: \(tableView.bounds.height)")
-
-        UIGraphicsBeginImageContextWithOptions(tableView.contentSize, true, UIScreen.mainScreen().scale)
-        if tableView.respondsToSelector("drawViewHierarchyInRect") {
-            tableView.drawViewHierarchyInRect(tableView.bounds, afterScreenUpdates: true)
-        } else {
-            tableView.layer.renderInContext(UIGraphicsGetCurrentContext())
-        }
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        // set back tableView's frame
-        tableView.frame = oldFrame
         isSharing = false
         tableView.reloadData()
         return image
-    }
-    
-    // MARK: - 友盟分享 Delegate
-
-    func isDirectShareInIconActionSheet() -> Bool {
-        return false
-    }
-
-    func didFinishGetUMSocialDataInViewController(response: UMSocialResponseEntity!) {
-//        if response.responseCode == UMSResponseCodeSuccess {
-            println("shared to: \(response.data.keys.first)")
+        
+//        /*********************************************/
+//        isSharing = true
+//        tableView.reloadData()
+//        tableView.setNeedsLayout()
+//        tableView.layoutIfNeeded()
+//        tableView.reloadData()
+//        
+//        // scroll down the tableview from top to bottom
+//        tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: UITableViewScrollPosition.bottom, animated: false)
+//        tableView.scrollToRow(at: IndexPath(row: 0, section: 1), at: UITableViewScrollPosition.bottom, animated: false)
+//        for i in 0..<reportItems.count {
+//            tableView.scrollToRow(at: IndexPath(row: i, section: 2), at: UITableViewScrollPosition.bottom, animated: false)
 //        }
+//        tableView.scrollToRow(at: IndexPath(row: 0, section: 3), at: UITableViewScrollPosition.bottom, animated: false)
+//
+//        /*********************************************/
+//        
+//        let oldFrame = tableView.frame
+//        tableView.frame = CGRect(x: 0, y: 0, width: tableView.contentSize.width, height: tableView.contentSize.height)
+//        
+////        print("tableView.frame.height: \(tableView.frame.height)")
+////        print("tableView.bounds.height: \(tableView.bounds.height)")
+//
+//        UIGraphicsBeginImageContextWithOptions(tableView.contentSize, true, UIScreen.main.scale)
+//        if tableView.responds(to: "drawViewHierarchyInRect") {
+//            tableView.drawHierarchy(in: tableView.bounds, afterScreenUpdates: true)
+//        } else {
+//            tableView.layer.render(in: UIGraphicsGetCurrentContext()!)
+//        }
+//        let image = UIGraphicsGetImageFromCurrentImageContext()
+//        UIGraphicsEndImageContext()
+//        
+//        // set back tableView's frame
+//        tableView.frame = oldFrame
+//        isSharing = false
+//        tableView.reloadData()
+//        return image!
     }
     
     
     // MARK: - TableView DataSource & Delegate
     
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         if isSharing {
             return 4 // header + title + items + footer
         } else {
@@ -283,7 +293,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if isSharing {
             switch section {
             case 0: // header
@@ -310,18 +320,18 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         if isSharing { // 生成分享图片时
             
             switch indexPath.section {
                 
             case 0:
-                let cell = tableView.dequeueReusableCellWithIdentifier("headerCell", forIndexPath: indexPath) as! UITableViewCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "headerCell", for: indexPath) 
                 return cell
                 
             case 1:
-                let cell = tableView.dequeueReusableCellWithIdentifier("titleWhenShareCell", forIndexPath: indexPath) as! ReportTitleWhenShareTableViewCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "titleWhenShareCell", for: indexPath) as! ReportTitleWhenShareTableViewCell
                 cell.titleLabel.text = reportTitle
                 cell.authorLabel.text = affiliationOfAuthor + " " + authorName
                 return cell
@@ -330,7 +340,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
                 let item = reportItems[indexPath.row]
                 
                 if item.type == "text" {
-                    let cell = tableView.dequeueReusableCellWithIdentifier("reportCell", forIndexPath: indexPath) as! ReportItemTableViewCell
+                    let cell = tableView.dequeueReusableCell(withIdentifier: "reportCell", for: indexPath) as! ReportItemTableViewCell
                     cell.headerImage.image = item.iconImage
                     cell.header.text = item.header
                     cell.content.text = item.content
@@ -339,7 +349,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
                     return cell
                     
                 } else if item.type == "image" {
-                    let cell = tableView.dequeueReusableCellWithIdentifier("imageCell", forIndexPath: indexPath) as! ReportImageItemTableViewCell
+                    let cell = tableView.dequeueReusableCell(withIdentifier: "imageCell", for: indexPath) as! ReportImageItemTableViewCell
                     cell.photoMemoImageView.image = item.image
                     // 增加下面一行，否则第一次显示时label中内容不全，需要scroll之后才显示完整
                     cell.layoutIfNeeded()
@@ -351,7 +361,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
 
                 
             case 3:
-                let cell = tableView.dequeueReusableCellWithIdentifier("footerCell", forIndexPath: indexPath) as! UITableViewCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "footerCell", for: indexPath) 
                 return cell
                 
             default:
@@ -363,21 +373,21 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
             switch indexPath.section {
                 
             case 0: // titleCell
-                let cell = tableView.dequeueReusableCellWithIdentifier("titleCell", forIndexPath: indexPath) as! ReportTitleTableViewCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "titleCell", for: indexPath) as! ReportTitleTableViewCell
                 // set background and border
-                cell.titleTextField.backgroundColor = UIColor.whiteColor()
-                cell.titleTextField.borderStyle = .RoundedRect
+                cell.titleTextField.backgroundColor = UIColor.white
+                cell.titleTextField.borderStyle = .roundedRect
                 cell.titleTextField.placeholder = "标题（如：急性视网膜坏死综合征一例）"
                 cell.titleTextField.text = reportTitle
-                println("title: \(reportTitle)")
+                print("title: \(reportTitle)")
                 
-                cell.affiliationTextField.backgroundColor = UIColor.whiteColor()
-                cell.affiliationTextField.borderStyle = .RoundedRect
+                cell.affiliationTextField.backgroundColor = UIColor.white
+                cell.affiliationTextField.borderStyle = .roundedRect
                 cell.affiliationTextField.placeholder = "单位名称"
                 cell.affiliationTextField.text = affiliationOfAuthor
                 
-                cell.authorNameTextField.backgroundColor = UIColor.whiteColor()
-                cell.authorNameTextField.borderStyle = .RoundedRect
+                cell.authorNameTextField.backgroundColor = UIColor.white
+                cell.authorNameTextField.borderStyle = .roundedRect
                 cell.authorNameTextField.placeholder = "署名"
                 cell.authorNameTextField.text = authorName
                 return cell
@@ -387,7 +397,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
                 let item = reportItems[indexPath.row]
                 
                 if item.type == "text" {
-                    let cell = tableView.dequeueReusableCellWithIdentifier("reportCell", forIndexPath: indexPath) as! ReportItemTableViewCell
+                    let cell = tableView.dequeueReusableCell(withIdentifier: "reportCell", for: indexPath) as! ReportItemTableViewCell
                     cell.headerImage.image = item.iconImage
                     cell.header.text = item.header
                     cell.content.text = item.content
@@ -396,7 +406,7 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
                     return cell
                     
                 } else if item.type == "image" {
-                    let cell = tableView.dequeueReusableCellWithIdentifier("imageCell", forIndexPath: indexPath) as! ReportImageItemTableViewCell
+                    let cell = tableView.dequeueReusableCell(withIdentifier: "imageCell", for: indexPath) as! ReportImageItemTableViewCell
                     cell.photoMemoImageView.image = item.image
                     // 增加下面一行，否则第一次显示时label中内容不全，需要scroll之后才显示完整
                     cell.layoutIfNeeded()
@@ -415,23 +425,25 @@ class ReportViewController: UIViewController, UITableViewDataSource, UITableView
     
     // MARK: - Navigation
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showImageSelecter" {
-            let imageSelecterVC = segue.destinationViewController.topViewController as! ImageSelecterCollectionViewController
+            let nav = segue.destination as! UINavigationController
+            let imageSelecterVC = nav.topViewController as! ImageSelecterCollectionViewController
             imageSelecterVC.patient = patient!
             imageSelecterVC.setInitialSelectionStatus(selectionStatusOfPhotoMemos)
         }
     }
     
+    
     // Unwind Segue
-    @IBAction func goBackToReportViewController(segue: UIStoryboardSegue) {
+    @IBAction func goBackToReportViewController(_ segue: UIStoryboardSegue) {
         // from imageSelecter
-        if let imageSelecterVC = segue.sourceViewController as? ImageSelecterCollectionViewController where segue.identifier == "backToReport" {
+        if let imageSelecterVC = segue.source as? ImageSelecterCollectionViewController, segue.identifier == "backToReport" {
             selectionStatusOfPhotoMemos = imageSelecterVC.selectionStatusOfImages
             numberOfSharedPhotoMemos = imageSelecterVC.numberOfSelectedImages
-            println("back from selection: number: \(numberOfSharedPhotoMemos)")
+            print("back from selection: number: \(numberOfSharedPhotoMemos)")
             loadData()
-            addImageButton.setTitle("添加图片 (\(numberOfSharedPhotoMemos))", forState: .Normal)
+            addImageButton.setTitle("添加图片 (\(numberOfSharedPhotoMemos))", for: UIControlState())
             tableView.reloadData()
         }
     }

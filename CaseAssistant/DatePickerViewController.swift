@@ -10,7 +10,7 @@ import UIKit
 
 class DatePickerViewController: UIViewController
 {
-    var selectedDate: NSDate?
+    var selectedDate: Date?
     
     // ViewController from: unwind segue identifier
     let NavigationItems = [
@@ -24,23 +24,23 @@ class DatePickerViewController: UIViewController
     @IBOutlet weak var dateLabel: UILabel!
     @IBOutlet weak var datePicker: UIDatePicker!
     
-    @IBAction func pickDate(sender: UIDatePicker) {
+    @IBAction func pickDate(_ sender: UIDatePicker) {
         selectedDate = sender.date
-        dateLabel.text = NSDateFormatter.localizedStringFromDate(selectedDate!, dateStyle: .LongStyle, timeStyle: .NoStyle)
+        dateLabel.text = DateFormatter.localizedString(from: selectedDate!, dateStyle: .long, timeStyle: .none)
     }
     
-    @IBAction func doneDatePick(sender: UIBarButtonItem) {
-        assert(contains(NavigationItems.keys, fromVC), "error: fromVC not valid")
-        performSegueWithIdentifier(NavigationItems[fromVC], sender: self)
+    @IBAction func doneDatePick(_ sender: UIBarButtonItem) {
+        assert(NavigationItems.keys.contains(fromVC), "error: fromVC not valid")
+        performSegue(withIdentifier: NavigationItems[fromVC]!, sender: self)
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        datePicker.datePickerMode = .Date
+        datePicker.datePickerMode = .date
         if selectedDate != nil {
             datePicker.setDate(selectedDate!, animated: true)
-            dateLabel.text = NSDateFormatter.localizedStringFromDate(selectedDate!, dateStyle: .LongStyle, timeStyle: .NoStyle)
+            dateLabel.text = DateFormatter.localizedString(from: selectedDate!, dateStyle: .long, timeStyle: .none)
         }
     }
 }

@@ -17,7 +17,7 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
         }
     }
     
-    var firstRecordDate: NSDate?
+    var firstRecordDate: Date?
 //    var operationDate: NSDate?
     var dayIntervalLabels = [String]()
     var dateLabels = [String]()
@@ -41,7 +41,7 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
     }
     
     var screenWidth: CGFloat {
-        return UIScreen.mainScreen().bounds.size.width
+        return UIScreen.main.bounds.size.width
     }
     
 
@@ -53,7 +53,7 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
     
     // MARK: - Helper Functions
     
-    func getShiliData(s: String) -> CGFloat {
+    func getShiliData(_ s: String) -> CGFloat {
         if s.isEmpty {
             return 1e-6
         }
@@ -80,7 +80,7 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
         
     }
     
-    func getYanyaData(s: String) -> CGFloat {
+    func getYanyaData(_ s: String) -> CGFloat {
         if s.isEmpty {
             return 1e-6
         }
@@ -102,12 +102,12 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
         rYanyaData.removeAll()
         lYanyaData.removeAll()
         
-        firstRecordDate = patient!.firstTreatmentDate
+        firstRecordDate = patient!.firstTreatmentDate as Date
 
         for r in patient!.recordsSortedAscending {
-            let days = numberOfDaysBetweenTwoDates(firstRecordDate!, r.date)
+            let days = numberOfDaysBetweenTwoDates(firstRecordDate!, toDate: r.date)
             dayIntervalLabels.append("\(days)d")
-            dateLabels.append(NSDateFormatter.localizedStringFromDate(r.date, dateStyle: .ShortStyle, timeStyle: .NoStyle))
+            dateLabels.append(DateFormatter.localizedString(from: r.date as Date, dateStyle: .short, timeStyle: .none))
             rShiliData.append(getShiliData(r.g("rShili")))
             lShiliData.append(getShiliData(r.g("lShili")))
             rJiaozhengshiliData.append(getShiliData(r.g("rJiaozhengshili")))
@@ -118,199 +118,200 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
     }
     
     
-    func createRShiliChart(originY: CGFloat) -> (chart: PNLineChart, titleLabel: UILabel, legend: UIView) {
+    func createRShiliChart(_ originY: CGFloat) -> (chart: PNLineChart, titleLabel: UILabel, legend: UIView) {
         
-        var titleLabel = UILabel(frame: CGRectMake(0, originY + ChartConstants.ChartMargin, containerView.frame.width, ChartConstants.TitleHeight))
-        titleLabel.textAlignment = NSTextAlignment.Center
+        let titleLabel = UILabel(frame: CGRect(x: 0, y: originY + ChartConstants.ChartMargin, width: containerView.frame.width, height: ChartConstants.TitleHeight))
+        titleLabel.textAlignment = NSTextAlignment.center
         titleLabel.text = "右眼视力"
         
-        var chart = PNLineChart(frame: CGRectMake(0, titleLabel.frame.origin.y + titleLabel.frame.height, containerView.frame.width, ChartConstants.ChartHeight))
+        let chart = PNLineChart(frame: CGRect(x: 0, y: titleLabel.frame.origin.y + titleLabel.frame.height, width: containerView.frame.width, height: ChartConstants.ChartHeight))
         chart.yLabelFormat = "%1.1f";
-        chart.backgroundColor = UIColor.clearColor()
-        chart.showCoordinateAxis = true;
+        chart.backgroundColor = UIColor.clear
+        chart.isShowCoordinateAxis = true;
         chart.setXLabels(dayIntervalLabels, withWidth: chart.chartCavanWidth/CGFloat(dayIntervalLabels.count))
         chart.yFixedValueMax = 2.5
-        chart.yFixedValueMin = min(minElement(rShiliData), minElement(rJiaozhengshiliData)) - 0.1
+//        chart.yFixedValueMin = min(minElement(rShiliData), minElement(rJiaozhengshiliData)) - 0.1
+        chart.yFixedValueMin = min(rShiliData.min()!, rJiaozhengshiliData.min()!) - 0.1
         
-        var data1 = PNLineChartData()
+        let data1 = PNLineChartData()
         data1.dataTitle = "右眼裸眼视力"
         data1.color = ChartConstants.YellowColor
         data1.alpha = 1.0
         data1.itemCount = UInt(rShiliData.count)
-        data1.inflexionPointStyle = PNLineChartPointStyle.Circle
+        data1.inflexionPointStyle = PNLineChartPointStyle.circle
         data1.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = self.rShiliData[Int(index)]
-            println("y: \(yValue)")
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = self.rShiliData[Int(index)]
+            print("y: \(yValue)")
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
 
-        var data2 = PNLineChartData()
+        let data2 = PNLineChartData()
         data2.dataTitle = "右眼矫正视力"
         data2.color = ChartConstants.GreenColor
         data2.alpha = 1.0
         data2.itemCount = UInt(rJiaozhengshiliData.count)
-        data2.inflexionPointStyle = PNLineChartPointStyle.Circle
+        data2.inflexionPointStyle = PNLineChartPointStyle.circle
         data2.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = self.rJiaozhengshiliData[Int(index)]
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = self.rJiaozhengshiliData[Int(index)]
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
 
-        var zeroData = PNLineChartData()
+        let zeroData = PNLineChartData()
         zeroData.dataTitle = "零值参照"
-        zeroData.color = UIColor.lightGrayColor()
+        zeroData.color = UIColor.lightGray
         zeroData.alpha = 1.0
         zeroData.itemCount = UInt(lJiaozhengshiliData.count)
-        zeroData.inflexionPointStyle = PNLineChartPointStyle.None
+        zeroData.inflexionPointStyle = PNLineChartPointStyle.none
         zeroData.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = 1e-6
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = 1e-6
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
         
         chart.chartData = [zeroData, data1, data2]
-        chart.strokeChart()
+        chart.stroke()
         chart.delegate = self
         
-        chart.legendStyle = PNLegendItemStyle.Stacked
-        chart.legendFont = UIFont.boldSystemFontOfSize(12.0)
-        chart.legendFontColor = UIColor.blackColor()
+        chart.legendStyle = PNLegendItemStyle.stacked
+        chart.legendFont = UIFont.boldSystemFont(ofSize: 12.0)
+        chart.legendFontColor = UIColor.black
 
-        var legend = chart.getLegendWithMaxWidth(chart.bounds.width)
-        legend.frame = CGRectMake(ChartConstants.LegendLeftMargin, chart.frame.origin.y + chart.frame.height, legend.frame.size.width, legend.frame.size.width)
+        let legend = chart.getLegendWithMaxWidth(chart.bounds.width)
+        legend?.frame = CGRect(x: ChartConstants.LegendLeftMargin, y: chart.frame.origin.y + chart.frame.height, width: (legend?.frame.size.width)!, height: (legend?.frame.size.width)!)
         
-        return (chart, titleLabel, legend)
+        return (chart, titleLabel, legend!)
     }
 
-    func createLShiliChart(originY: CGFloat) -> (chart: PNLineChart, titleLabel: UILabel, legend: UIView) {
+    func createLShiliChart(_ originY: CGFloat) -> (chart: PNLineChart, titleLabel: UILabel, legend: UIView) {
         
-        var titleLabel = UILabel(frame: CGRectMake(0, originY + ChartConstants.ChartMargin, containerView.frame.width, ChartConstants.TitleHeight))
-        titleLabel.textAlignment = NSTextAlignment.Center
+        let titleLabel = UILabel(frame: CGRect(x: 0, y: originY + ChartConstants.ChartMargin, width: containerView.frame.width, height: ChartConstants.TitleHeight))
+        titleLabel.textAlignment = NSTextAlignment.center
         titleLabel.text = "左眼视力"
         
-        var chart = PNLineChart(frame: CGRectMake(0, titleLabel.frame.origin.y + titleLabel.frame.height, containerView.frame.width, ChartConstants.ChartHeight))
+        let chart = PNLineChart(frame: CGRect(x: 0, y: titleLabel.frame.origin.y + titleLabel.frame.height, width: containerView.frame.width, height: ChartConstants.ChartHeight))
         chart.yLabelFormat = "%1.1f";
-        chart.backgroundColor = UIColor.clearColor()
-        chart.showCoordinateAxis = true;
+        chart.backgroundColor = UIColor.clear
+        chart.isShowCoordinateAxis = true;
         chart.setXLabels(dayIntervalLabels, withWidth: chart.chartCavanWidth/CGFloat(dayIntervalLabels.count))
         chart.yFixedValueMax = 2.5
-        chart.yFixedValueMin = min(minElement(lShiliData), minElement(lJiaozhengshiliData)) - 0.1
+        chart.yFixedValueMin = min(lShiliData.min()!, lJiaozhengshiliData.min()!) - 0.1
         
-        var data1 = PNLineChartData()
+        let data1 = PNLineChartData()
         data1.dataTitle = "左眼裸眼视力"
         data1.color = ChartConstants.YellowColor
         data1.alpha = 1.0
         data1.itemCount = UInt(lShiliData.count)
-        data1.inflexionPointStyle = PNLineChartPointStyle.Circle
+        data1.inflexionPointStyle = PNLineChartPointStyle.circle
         data1.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = self.lShiliData[Int(index)]
-            println("y: \(yValue)")
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = self.lShiliData[Int(index)]
+            print("y: \(yValue)")
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
         
-        var data2 = PNLineChartData()
+        let data2 = PNLineChartData()
         data2.dataTitle = "左眼矫正视力"
         data2.color = ChartConstants.BlueColor
         data2.alpha = 1.0
         data2.itemCount = UInt(lJiaozhengshiliData.count)
-        data2.inflexionPointStyle = PNLineChartPointStyle.Circle
+        data2.inflexionPointStyle = PNLineChartPointStyle.circle
         data2.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = self.lJiaozhengshiliData[Int(index)]
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = self.lJiaozhengshiliData[Int(index)]
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
         
-        var zeroData = PNLineChartData()
+        let zeroData = PNLineChartData()
         zeroData.dataTitle = "零值参照"
-        zeroData.color = UIColor.lightGrayColor()
+        zeroData.color = UIColor.lightGray
         zeroData.alpha = 1.0
         zeroData.itemCount = UInt(lJiaozhengshiliData.count)
-        zeroData.inflexionPointStyle = PNLineChartPointStyle.None
+        zeroData.inflexionPointStyle = PNLineChartPointStyle.none
         zeroData.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = 1e-6
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = 1e-6
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
         
         chart.chartData = [zeroData, data1, data2]
-        chart.strokeChart()
+        chart.stroke()
         chart.delegate = self
         
-        chart.legendStyle = PNLegendItemStyle.Stacked
-        chart.legendFont = UIFont.boldSystemFontOfSize(12.0)
-        chart.legendFontColor = UIColor.blackColor()
+        chart.legendStyle = PNLegendItemStyle.stacked
+        chart.legendFont = UIFont.boldSystemFont(ofSize: 12.0)
+        chart.legendFontColor = UIColor.black
         
-        var legend = chart.getLegendWithMaxWidth(chart.bounds.width)
-        legend.frame = CGRectMake(ChartConstants.LegendLeftMargin, chart.frame.origin.y + chart.frame.height, legend.frame.size.width, legend.frame.size.width)
+        let legend = chart.getLegendWithMaxWidth(chart.bounds.width)
+        legend?.frame = CGRect(x: ChartConstants.LegendLeftMargin, y: chart.frame.origin.y + chart.frame.height, width: (legend?.frame.size.width)!, height: (legend?.frame.size.width)!)
         
-        return (chart, titleLabel, legend)
+        return (chart, titleLabel, legend!)
     }
     
-    func createYanyaChart(originY: CGFloat) -> (chart: PNLineChart, titleLabel: UILabel, legend: UIView) {
+    func createYanyaChart(_ originY: CGFloat) -> (chart: PNLineChart, titleLabel: UILabel, legend: UIView) {
         
-        var titleLabel = UILabel(frame: CGRectMake(0, originY + ChartConstants.ChartMargin, containerView.frame.width, ChartConstants.TitleHeight))
-        titleLabel.textAlignment = NSTextAlignment.Center
+        let titleLabel = UILabel(frame: CGRect(x: 0, y: originY + ChartConstants.ChartMargin, width: containerView.frame.width, height: ChartConstants.TitleHeight))
+        titleLabel.textAlignment = NSTextAlignment.center
         titleLabel.text = "眼压"
         
-        var chart = PNLineChart(frame: CGRectMake(0, titleLabel.frame.origin.y + titleLabel.frame.height, containerView.frame.width, ChartConstants.ChartHeight))
+        let chart = PNLineChart(frame: CGRect(x: 0, y: titleLabel.frame.origin.y + titleLabel.frame.height, width: containerView.frame.width, height: ChartConstants.ChartHeight))
         chart.yLabelFormat = "%1.1f";
-        chart.backgroundColor = UIColor.clearColor()
-        chart.showCoordinateAxis = true;
+        chart.backgroundColor = UIColor.clear
+        chart.isShowCoordinateAxis = true;
         chart.setXLabels(dayIntervalLabels, withWidth: chart.chartCavanWidth/CGFloat(dayIntervalLabels.count))
-        chart.yFixedValueMax = max(maxElement(rYanyaData), maxElement(lYanyaData)) + 10
-        chart.yFixedValueMin = min(minElement(rYanyaData), minElement(lYanyaData)) - 10
+        chart.yFixedValueMax = max(rYanyaData.max()!, lYanyaData.max()!) + 10
+        chart.yFixedValueMin = min(rYanyaData.max()!, lYanyaData.max()!) - 10
         
-        var data1 = PNLineChartData()
+        let data1 = PNLineChartData()
         data1.dataTitle = "右眼眼压"
         data1.color = ChartConstants.GreenColor
         data1.alpha = 1.0
         data1.itemCount = UInt(rYanyaData.count)
-        data1.inflexionPointStyle = PNLineChartPointStyle.Circle
+        data1.inflexionPointStyle = PNLineChartPointStyle.circle
         data1.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = self.rYanyaData[Int(index)]
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = self.rYanyaData[Int(index)]
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
         
-        var data2 = PNLineChartData()
+        let data2 = PNLineChartData()
         data2.dataTitle = "左眼眼压"
         data2.color = ChartConstants.BlueColor
         data2.alpha = 1.0
         data2.itemCount = UInt(lYanyaData.count)
-        data2.inflexionPointStyle = PNLineChartPointStyle.Circle
+        data2.inflexionPointStyle = PNLineChartPointStyle.circle
         data2.getData = ({(index: UInt) -> PNLineChartDataItem in
-            var yValue:CGFloat = self.lYanyaData[Int(index)]
-            var item = PNLineChartDataItem(y: yValue)
-            return item
+            let yValue:CGFloat = self.lYanyaData[Int(index)]
+            let item = PNLineChartDataItem(y: yValue)
+            return item!
         })
         
         chart.chartData = [data1, data2]
-        chart.strokeChart()
+        chart.stroke()
         chart.delegate = self
         
-        chart.legendStyle = PNLegendItemStyle.Stacked
-        chart.legendFont = UIFont.boldSystemFontOfSize(12.0)
-        chart.legendFontColor = UIColor.blackColor()
+        chart.legendStyle = PNLegendItemStyle.stacked
+        chart.legendFont = UIFont.boldSystemFont(ofSize: 12.0)
+        chart.legendFontColor = UIColor.black
         
-        var legend = chart.getLegendWithMaxWidth(chart.bounds.width)
-        legend.frame = CGRectMake(ChartConstants.LegendLeftMargin, chart.frame.origin.y + chart.frame.height, legend.frame.size.width, legend.frame.size.width)
+        let legend = chart.getLegendWithMaxWidth(chart.bounds.width)
+        legend?.frame = CGRect(x: ChartConstants.LegendLeftMargin, y: chart.frame.origin.y + chart.frame.height, width: (legend?.frame.size.width)!, height: (legend?.frame.size.width)!)
         
-        return (chart, titleLabel, legend)
+        return (chart, titleLabel, legend!)
     }
     
-    func userClickedOnLinePoint(point: CGPoint, lineIndex: Int) {
-        println("clicked on line \(lineIndex)")
+    func userClicked(onLinePoint point: CGPoint, lineIndex: Int) {
+        print("clicked on line \(lineIndex)")
     }
     
-    func userClickedOnLineKeyPoint(point: CGPoint, lineIndex: Int, pointIndex: Int) {
-        println("clicked on line \(lineIndex) point \(pointIndex)")
+    func userClicked(onLineKeyPoint point: CGPoint, lineIndex: Int, pointIndex: Int) {
+        print("clicked on line \(lineIndex) point \(pointIndex)")
         if lineIndex == 0 {
-            println("value: \(rShiliData[pointIndex])")
+            print("value: \(rShiliData[pointIndex])")
         }
         if lineIndex == 1 {
-            println("value: \(rJiaozhengshiliData[pointIndex])")
+            print("value: \(rJiaozhengshiliData[pointIndex])")
         }
     }
     
@@ -342,30 +343,31 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
         containerView.frame = contentsFrame
     }
     
-    func viewForZoomingInScrollView(scrollView: UIScrollView) -> UIView? {
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return containerView
     }
 
-    func scrollViewDidZoom(scrollView: UIScrollView) {
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
 //        centerScrollViewContents()
     }
     
     // IBActions
     
-    @IBAction func saveImageButtonPressed(sender: UIBarButtonItem) {
-        UIGraphicsBeginImageContextWithOptions(containerView.bounds.size, true, UIScreen.mainScreen().scale)
-        if containerView.respondsToSelector("drawViewHierarchyInRect") {
-            containerView.drawViewHierarchyInRect(containerView.bounds, afterScreenUpdates: true)
+    @IBAction func saveImageButtonPressed(_ sender: UIBarButtonItem) {
+        UIGraphicsBeginImageContextWithOptions(containerView.bounds.size, true, UIScreen.main.scale)
+        if containerView.responds(to: Selector(("drawViewHierarchyInRect"))
+            ) {
+            containerView.drawHierarchy(in: containerView.bounds, afterScreenUpdates: true)
         } else {
-            containerView.layer.renderInContext(UIGraphicsGetCurrentContext())
+            containerView.layer.render(in: UIGraphicsGetCurrentContext()!)
         }
         let image = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
         
         // 弹出保存成功提示
-        popupPrompt("图片已保存到手机相册", self.view)
+        popupPrompt("图片已保存到手机相册", inView: self.view)
     }
     
     // MARK: - ViewController Lifecycle
@@ -375,7 +377,7 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
         
         if patient!.records.count <= 1 {
             // 不画图
-            popupPrompt("数据量太少，至少需要两条记录", self.view)
+            popupPrompt("数据量太少，至少需要两条记录", inView: self.view)
         }
     }
     
@@ -385,10 +387,10 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
     override func viewDidLayoutSubviews() {
         
         // Set up the container view to hold your custom view hierarchy
-//        println("screenWidth: \(screenWidth)")
+//        print("screenWidth: \(screenWidth)")
         let containerSize = CGSize(width: screenWidth, height: 800.0)
         containerView = UIView(frame: CGRect(origin: CGPoint(x: 0, y: 0), size:containerSize))
-        containerView.backgroundColor = UIColor.whiteColor()
+        containerView.backgroundColor = UIColor.white
         scrollView.addSubview(containerView)
         
         if patient!.records.count > 1 {
@@ -405,19 +407,19 @@ class ChartViewController: UIViewController, PNChartDelegate, UIScrollViewDelega
             containerView.addSubview(title3)
             containerView.addSubview(chart3)
             containerView.addSubview(legend3)
-    //        println("bottom: \(legend2.frame.origin.y)")
+    //        print("bottom: \(legend2.frame.origin.y)")
             
             // Tell the scroll view the size of the contents
             scrollView.contentSize = containerSize
             
             // Set up the minimum & maximum zoom scales
-            let scrollViewFrame = scrollView.frame
-    //        println("scroll frame: \(scrollView.frame)")
-            let scaleWidth = scrollViewFrame.size.width / scrollView.contentSize.width
-            let scaleHeight = scrollViewFrame.size.height / scrollView.contentSize.height
-            let minScale = min(scaleWidth, scaleHeight)
+//            let scrollViewFrame = scrollView.frame
+    //        print("scroll frame: \(scrollView.frame)")
+//            let scaleWidth = scrollViewFrame.size.width / scrollView.contentSize.width
+//            let scaleHeight = scrollViewFrame.size.height / scrollView.contentSize.height
+//            let minScale = min(scaleWidth, scaleHeight)
             
-    //        println("minScale: \(minScale)")
+    //        print("minScale: \(minScale)")
             scrollView.minimumZoomScale = 1.0 //minScale
             scrollView.maximumZoomScale = 2.0
             scrollView.zoomScale = 1.0

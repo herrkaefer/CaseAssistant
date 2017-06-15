@@ -14,16 +14,7 @@ class AboutTableViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        var versionString = "眼科行医手记"
-        
-        if let version = CaseNoteConstants.appVersion {
-            versionString += " v\(version)"
-//            if let build = NSBundle.mainBundle().infoDictionary?["CFBundleVersion"] as? String {
-//                versionString += " (build \(build))"
-//            }
-        }
-        versionLabel.text = versionString
+        versionLabel.text = CaseApp.appName + " v" + CaseApp.version
     }
 
 }

@@ -24,7 +24,7 @@ class TagsTableViewController: UITableViewController {
         title = "所有标签"
     }
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         loadData()
         tableView.reloadData()
@@ -32,23 +32,23 @@ class TagsTableViewController: UITableViewController {
 
     // MARK: - Table view data source
 
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tags.count
     }
 
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("tagCell", forIndexPath: indexPath) as! UITableViewCell
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "tagCell", for: indexPath) 
         cell.textLabel?.text = ""+tags[indexPath.row].name
         cell.detailTextLabel?.text = ""+"\(tags[indexPath.row].numberOfPatientsTagged)"
 
         return cell
     }
     
-    override func tableView(tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         if tags.count > 0 {
             return "左滑可以删除标签"
         } else {
@@ -58,26 +58,26 @@ class TagsTableViewController: UITableViewController {
 
     // MARK: - TableView Delegate
     
-    override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
     
-    override func tableView(tableView: UITableView, editingStyleForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCellEditingStyle {
-        return .Delete
+    override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+        return .delete
     }
     
-    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
             let t = tags[indexPath.row]
             if t.numberOfPatientsTagged > 0 {
-                var alert = UIAlertController(
+                let alert = UIAlertController(
                     title: nil,
                     message: nil,
-                    preferredStyle: .ActionSheet
+                    preferredStyle: .actionSheet
                 )
                 alert.addAction(UIAlertAction(
                     title: "删除标签，并在所有病例中移除该标签",
-                    style: .Destructive,
+                    style: .destructive,
                     handler: { (action) -> Void in
                         t.removeFromAllPatientsTagged()
                         t.removeFromDB()
@@ -87,10 +87,10 @@ class TagsTableViewController: UITableViewController {
                     ))
                 alert.addAction(UIAlertAction(
                     title: "取消",
-                    style: .Cancel,
+                    style: .cancel,
                     handler: nil
                     ))
-                self.presentViewController(alert, animated: true, completion: nil)
+                self.present(alert, animated: true, completion: nil)
                 
             } else {
                 t.removeFromDB()
@@ -102,12 +102,12 @@ class TagsTableViewController: UITableViewController {
     
     // MARK: - Navigation
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let identifier = segue.identifier
         if identifier == "showPatientsWithTag" {
             let cell = sender as! UITableViewCell
-            if let indexPath = tableView.indexPathForCell(cell) {
-                let destinationVC = segue.destinationViewController.topViewController as! PatientGroupViewController
+            if let indexPath = tableView.indexPath(for: cell) {
+                let destinationVC = segue.destination as! PatientGroupTableViewController
                 destinationVC.setToShowTag(tags[indexPath.row])
             }
         }
